@@ -2,7 +2,6 @@
 
 ## TODO
 
-- [ ] Define project structure
 - [x] Define config file format
 - [ ] Define config file syntax
 - [ ] Implement config file parser
