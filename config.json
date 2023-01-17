@@ -1,0 +1,53 @@
+{
+  "servers": [
+    {
+      "name": "server1",
+      "listen": ["80", "localhost:8080"],
+      "autoindex": true,
+      "root": "./data",
+      "locations": [
+        {
+          "methods": ["GET"],
+          "path": "/",
+          "autoindex": true,
+          "index": "index.html"
+        },
+        {
+          "methods": ["GET", "POST"],
+          "path": "/another",
+          "root": "./data/somewhere/else",
+          "error_pages": {
+            "404": "/error/another/404.html"
+          },
+          "index": "index.php",
+          "cgi": {
+            "bin_path": "/usr/lib/cgi-bin",
+            "cgi_ext": ".php"
+          }
+        },
+        {
+          "methods": ["GET"],
+          "path": "/redirect",
+          "redirect": "/another"
+        }
+      ],
+      "error_pages": {
+        "404": "/error/404.html"
+      },
+      "max_body_size": "1000000"
+    },
+    {
+      "name": "server2",
+      "listen": ["80", "localhost:8081"],
+      "locations": [
+        {
+          "methods": ["GET"],
+          "path": "/",
+          "root": "./data2",
+          "autoindex": true,
+          "index": "index.html"
+        }
+      ]
+    }
+  ]
+}

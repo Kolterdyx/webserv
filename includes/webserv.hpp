@@ -1,8 +1,9 @@
 
-#ifndef WEBSERV_HPP
+#ifndef SERVER_HPP
 #define WEBSERV_HPP
 
-#include <stdio.h>
 #include "json.h"
+#include <iostream>
+#include "Webserv.hpp"
 
-#endif // WEBSERV_HPP
+#endif // SERVER_HPP
