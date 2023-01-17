@@ -1,5 +1,14 @@
 # webserv
 
+## TODO
+
+- [x] Define configuration file format
+- [x] Parse configuration file
+- [ ] Create functional `Config` class.
+- [ ] Use `Config` class to create `Server` class instances.
+- [ ] Create `Server` class.
+- [ ] Finish TODO list.
+
 ## Configuration
 
 The configuration file is written in JSON. This is how it is structured:
