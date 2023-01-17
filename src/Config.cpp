@@ -13,7 +13,6 @@ Config::Config(const char *config_file) {
 	}
 	std::string config_str((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 	this->config_json = json::jobject::parse(config_str);
-	this->init();
 }
 
 
@@ -26,7 +25,6 @@ Config::Config(const Config &copy) {
 Config &Config::operator=(const Config &copy) {
 	if (this != &copy) {
 		this->config_json = copy.config_json;
-		init();
 	}
 	return *this;
 }
@@ -35,11 +33,9 @@ Config::~Config() {
 
 }
 
-void Config::init() {
-}
-
 std::ostream &operator<<(std::ostream &out, const Config &config) {
 	out << "Config {\n";
+	(void)config;
 	out << "}\n";
 	return out;
 }

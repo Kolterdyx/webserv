@@ -4,7 +4,7 @@ CFLAGS = -Wall -Wextra -Werror -DM -g -std=c++98
 
 NAME = webserv
 SRC_DIR = src
-SRC = main.cpp json.cpp Server.cpp Config.cpp
+SRC = main.cpp json.cpp Webserv.cpp Server.cpp Config.cpp
 BUILD_DIR = build
 INCLUDE_DIR = includes
 INCLUDES = -I./$(INCLUDE_DIR)
