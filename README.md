@@ -2,8 +2,10 @@
 
 ## TODO
 
-- [x] Define configuration file format
-- [x] Parse configuration file
+- [x] Define config file format
+- [ ] Define config file syntax
+- [ ] Implement config file parser
+- [ ] Parse configuration file
 - [ ] Create functional `Config` class.
 - [ ] Use `Config` class to create `Server` class instances.
 - [ ] Create `Server` class.
@@ -11,7 +13,9 @@
 
 ## Configuration
 
-The configuration file is written in JSON. This is how it is structured:
+**TODO**: WE NEED OUR OWN FORMAT, WE CANT USE JSON
+
+The configuration file is written in JSON for the time being. This is how it is structured:
 
 * `servers`*: an array of servers
   * `0`
