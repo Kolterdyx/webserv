@@ -1,0 +1,38 @@
+<xml attr="yeet">
+    <server name="test">
+        <listen>
+            <address host="localhost" port="8080"/>
+            <address port="8081"/>
+            <address host="localhost"/>
+        </listen>
+        <client_max_body_size>100000000</client_max_body_size>
+        <root>/var/www</root>
+        <index>index.html</index>
+        <error_pages>
+            <c404>/404.html</c404>
+            <c500>/50x.html</c500>
+            <c501>/50x.html</c501>
+            <c502>/50x.html</c502>
+        </error_pages>
+        <routes>
+            <route path="/somepath">
+                <root>/var/www/another/path</root>
+                <index>not_the_default.html</index>
+                <directory_listing enabled="false"/>
+            </route>
+            <route path="/someotherpath">
+                <redirect code="301">http://localhost:8080/</redirect>
+            </route>
+            <route path="/dirlist">
+                <directory_listing enabled="true"/>
+                <root>/var/www/mydir</root>
+                <directory_index>directories.html</directory_index>
+            </route>
+            <route path="/usecgi">
+                <cgi enabled="true" path="/usr/bin/php" ext=".php"/>
+                <root>/var/www/mydir</root>
+                <index>index.php</index>
+            </route>
+        </routes>
+    </server>
+</xml>

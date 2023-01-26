@@ -1,10 +1,10 @@
 
-CC = g++
+CC = c++
 CFLAGS = -Wall -Wextra -Werror -DM -g -std=c++98
 
 NAME = webserv
 SRC_DIR = src
-SRC = main.cpp json.cpp Webserv.cpp Server.cpp Config.cpp
+SRC = main.cpp Webserv.cpp Server.cpp WebservConfig/XML.cpp
 BUILD_DIR = build
 INCLUDE_DIR = includes
 INCLUDES = -I./$(INCLUDE_DIR)

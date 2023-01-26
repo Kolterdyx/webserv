@@ -1,16 +1,25 @@
+#include <iostream>
+#include <fstream>
+#include <unistd.h>
+#include "XML.hpp"
+#include "ordered_map.hpp"
 
-#include "webserv.hpp"
+int main() {
+	std::ifstream file;
 
-int main(int argc, char **argv)
-{
-	if (argc != 2)
-	{
-		std::cout << "Usage: ./webserv [config file]" << std::endl;
-		return (1);
+	file.open("test.xml");
+	std::string xml_string;
+	std::string line;
+	if (file.is_open()) {
+		while (std::getline(file, line)) {
+			xml_string += line + "\n";
+		}
 	}
-	Config config(argv[1]);
-	Webserv webserv(config);
-	webserv.run();
-	return (0);
-}
+	file.close();
 
+	XML test("<xml>\n    <server/>\n</xml>\n");
+
+	std::cout << "Hello, World!" << std::endl;
+
+	std::cout << test << std::endl;
+}

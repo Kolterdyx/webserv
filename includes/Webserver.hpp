@@ -2,15 +2,15 @@
 #define WEBSERVER_HPP
 
 #include <iostream>
-#include "Config.hpp"
+#include "XML.hpp"
 
 class Webserver {
 private:
-	Config config;
+	XML config;
 
 public:
 	Webserver();
-	explicit Webserver(const Config& config);
+	explicit Webserver(const XML& config);
 	Webserver(const Webserver &copy);
 	Webserver &operator=(const Webserver &copy);
 	~Webserver();

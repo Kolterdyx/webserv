@@ -1,29 +1,29 @@
-#include "Webserv.hpp"
+#include "Webserver.hpp"
 
-void Webserv::run()
+void Webserver::run()
 {
 	printf("Hello World!\n");
 }
 
-Webserv::Webserv() {
+Webserver::Webserver() {
 
 }
 
-Webserv::Webserv(const Webserv &copy) {
+Webserver::Webserver(const Webserver &copy) {
 	*this = copy;
 }
 
-Webserv &Webserv::operator=(const Webserv &copy) {
+Webserver &Webserver::operator=(const Webserver &copy) {
 	if (this != &copy) {
 		this->config = copy.config;
 	}
 	return *this;
 }
 
-Webserv::~Webserv() {
+Webserver::~Webserver() {
 
 }
 
-Webserv::Webserv(const Config &config) {
+Webserver::Webserver(const XML &config) {
 	this->config = config;
 }
