@@ -262,6 +262,11 @@ std::string XML::get_first_xml_object_raw(const std::string &xml_string)
 		return "";
 	}
 
+	// TODO: Fix parsing to allow self-closing tags to be at the end of an xml
+	//  string. Currently, this will make the parser think that all the children
+	//  alongside the self-closing tag and the self-closing tag itself are all
+	//  just raw text instead of parseable xml objects.
+
 	std::string content;
 	std::string tag = XML::get_first_tag(xml_string);
 	std::string tag_name = XML::get_tag_name(tag);
