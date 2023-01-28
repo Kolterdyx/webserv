@@ -9,7 +9,7 @@ BUILD_DIR = build
 INCLUDE_DIR = includes
 INCLUDES = -I./$(INCLUDE_DIR)
 LIB_DIR = lib
-LIBS = -L./$(LIB_DIR)
+LIBS =
 
 
 # Do not change these

@@ -5,20 +5,12 @@ XML::XML() : id(0), has_content(false) {}
 
 XML::XML(const std::string &xml_string, size_t id) : id(id) {
 	has_content = false;
-	try {
-		parse_xml(xml_string);
-	} catch (std::out_of_range &e) {
-		std::cerr << e.what() << std::endl;
-	}
+	parse_xml(xml_string);
 }
 
 XML::XML(const std::string &xml_string) : id(0) {
 	has_content = false;
-	try {
-		parse_xml(xml_string);
-	} catch (std::out_of_range &e) {
-		std::cerr << e.what() << std::endl;
-	}
+	parse_xml(xml_string);
 }
 
 XML::XML(const XML &xml, size_t id) : id(id) {
@@ -41,7 +33,6 @@ XML::~XML() {
 	}
 }
 
-
 XML &XML::operator=(const XML &xml) {
 	if (this != &xml) {
 		attributes = xml.attributes;
@@ -53,160 +44,279 @@ XML &XML::operator=(const XML &xml) {
 }
 
 void XML::parse_xml(const std::string &xml_content) {
-	int i = 0;
-	// There is only one root tag, so we can assume that the first tag is the root tag
-	while (i < xml_content.length() && is_whitespace(xml_content[i])) i++;
-	printf("i: %d\n", i);
-	if (xml_content[i] != '<') {
-		throw std::invalid_argument("XML string must start with '<'");
-	}
-	i++;
-	while (i < xml_content.length() && is_whitespace(xml_content[i])) i++;
-	printf("i: %d\n", i);
-	std::string name;
-	while (i < xml_content.length() && !is_whitespace(xml_content[i]) && (xml_content[i] != '>' || xml_content.substr(i, 2) != "/>")) {
-		name += xml_content[i];
-		i++;
-	}
-	printf("i: %d\n", i);
-	this->tag = name;
-	while (i < xml_content.length() && is_whitespace(xml_content[i])) i++;
-	printf("ii: %d\n", i);
-	// Parse attributes
-	while (i < xml_content.length() && (xml_content[i] != '>' || xml_content.substr(i, 2) != "/>")) {
-		std::string attribute_name;
-		printf("i: %d\n", i);
-		while (i < xml_content.length() && !is_whitespace(xml_content[i]) && xml_content[i] != '=') {
-			attribute_name += xml_content[i];
-			i++;
-		}
-		printf("i: %d\n", i);
-		while (i < xml_content.length() && is_whitespace(xml_content[i])) i++;
-		if (xml_content[i] != '=') {
-			throw std::invalid_argument("XML attribute must have a value");
-		}
-		i++;
-		while (i < xml_content.length() && is_whitespace(xml_content[i])) i++;
-		if (xml_content[i] != '"') {
-			throw std::invalid_argument("XML attribute value must be enclosed in double quotes");
-		}
-		i++;
-		std::string attribute_value;
-		while (i < xml_content.length() && xml_content[i] != '"') {
-			attribute_value += xml_content[i];
-			i++;
-		}
-		i++;
-		attributes.insert(attribute_name, attribute_value);
-		while (i < xml_content.length() && is_whitespace(xml_content[i])) i++;
-	}
-	printf("i: %d\n", i);
-	// See if this is a self-closing tag
-	if (xml_content[i] == '/') {
-		i++;
-		if (xml_content[i] != '>') {
-			throw std::invalid_argument("XML tag must end with '>'");
-		}
-		return;
-	} else {
-		// If we get here, this is not a self-closing tag, so it must have either children or text content
-		// First, subtract the content until the end tag
-		if (i < xml_content.length() && xml_content[i] != '>') {
-			throw std::invalid_argument("XML tag must end with '>'");
-		}
-		i++;
-		std::string content;
-		std::string end_tag = "</" + name + ">";
-		while (i < xml_content.length() && xml_content.substr(i, end_tag.size()) != end_tag && i < xml_content.length()) {
-			content += xml_content[i];
-			i++;
-		}
-		if (i == xml_content.length()) {
-			throw std::invalid_argument("XML tag must have an end tag");
-		}
-		std::cout << "Content: " << content << std::endl;
-		// Now, see if the content is a valid XML string
+	std::string xml_str = get_first_xml_object(xml_content);
+	std::string xml_tag = get_first_tag(xml_str);
+	tag = get_tag_name(xml_tag);
+	attributes = get_attributes(xml_tag);
+	std::string xml_content_str = get_xml_content(xml_str);
+	attributes.insert("__content__", xml_content_str);
+	if (!xml_content_str.empty()) {
 		try {
-			save_children(content);
-		} catch (std::invalid_argument &e) {
-			// If it's not a valid XML string, it's just text content
-			this->has_content = true;
-			attributes.insert("content", content);
+			save_children(xml_content_str);
+		} catch (std::runtime_error &e) {
+			has_content = true;
 		}
 	}
 }
 
-void XML::save_children(std::string xml_content) {
-	// Separate the content into children. Must be compliant with C++98.
-	// Each child is a valid XML string. Each child may have children of its own, which we need to ignore.
-	// A child is delimited by its start tag and its end tag. The end tag is the same as the start tag, but with a '/' before the tag.
-	// This is how a child looks like: <child [attributes[="value"]>...</child>.
-	// We can find a child by looking for its start tag, and then finding the end tag that matches it.
+void XML::save_children(const std::string& xml_content) {
+	std::vector<std::string> objects;
+	size_t len = 0;
+	std::string obj = "1";
+	while (len < xml_content.length() && !obj.empty()) {
+		obj = get_first_xml_object(xml_content, len);
+		len += obj.length();
+		if (!obj.empty())
+			objects.push_back(obj);
+	}
 
-	// First, find the start tag
-	std::vector<std::string> children_strings;
+	for (size_t i = 0; i < objects.size(); i++) {
+		obj = objects[i];
+		std::string xml_tag = get_first_tag(obj);
+		std::string tag_name = get_tag_name(xml_tag);
+		XML *child = new XML(trim(obj, " \n\t"), children.size());
+		children.insert(tag_name + std::to_string(children.size()), child);
+	}
+
+
+}
+
+char XML::stri(std::string str, size_t i)
+{
+	if (i < 0 || i >= str.length())
+		return 0;
+	return str[i];
+}
+
+std::string XML::clean_tag(const std::string &_tag)
+{
+	std::string tag_clean1 = _tag;
+	while (is_whitespace(stri(tag_clean1, 0)))
+		tag_clean1 = tag_clean1.substr(1);
+	while (is_whitespace(stri(tag_clean1, tag_clean1.length() - 1)))
+		tag_clean1 = tag_clean1.substr(0, tag_clean1.length() - 1);
+
+	std::string tag_clean2;
+	bool in_quotes = false;
+	for (size_t i = 0; i < tag_clean1.length(); i++)
+	{
+		if (stri(tag_clean1, i) == '"')
+			in_quotes = !in_quotes;
+		if (is_whitespace(stri(tag_clean1, i)) && !in_quotes)
+		{
+			if (!is_whitespace(stri(tag_clean1, i - 1)) && stri(tag_clean1, i - 1) != '=' && stri(tag_clean1, i + 1) != '=' && stri(tag_clean1, i + 1) != '>')
+				tag_clean2 += ' ';
+		}
+		else
+			tag_clean2 += stri(tag_clean1, i);
+	}
+
+	return tag_clean2;
+}
+
+std::string XML::trim(std::string str, std::string chars)
+{
+	// Remove all characters in chars from the ends of str
+
+	size_t start = 0;
+	size_t end = str.length() - 1;
+	while (start < str.length() && chars.find(str[start]) != std::string::npos)
+		start++;
+	while (end > 0 && chars.find(str[end]) != std::string::npos)
+		end--;
+	return str.substr(start, end - start + 1);
+}
+
+std::string XML::get_first_tag(const std::string &xml_str)
+{
 	size_t i = 0;
-
-//	std::cout << "size: " << xml_content.size() << std::endl;
-
-	while (i < xml_content.length()) {
-		std::string child_string;
-		std::string child_content;
-		std::string child_attributes;
-		std::string child_name;
-		bool self_closing = false;
-		while (is_whitespace(xml_content[i])) i++;
-		if (i == xml_content.length()) break;
-		if (xml_content[i] == '<') {
-			// We found the start of the start tag. Now, find the end of the start tag
-			i++;
-			while (is_whitespace(xml_content[i])) i++;
-			while (!is_whitespace(xml_content[i]) && xml_content[i] != '>') {
-				child_name += xml_content[i];
-				i++;
-			}
-			// We also need to save the attributes. We can do it in a string.
-			while (xml_content[i] != '>') {
-				if (xml_content[i] == '/' && xml_content[i+1] == '>') {
-					// This is a self-closing tag. We can save the child and move on
-					child_string = "<" + child_name + child_attributes + "/>";
-					children_strings.push_back(child_string);
-					i += 2;
-					self_closing = true;
-					break;
-				}
-				child_attributes += xml_content[i];
-				i++;
-			}
-		}
-		if (self_closing) {
-			continue;
-		}
-		if (child_name.empty() && i != xml_content.length()) {
-			// We didn't find a start tag. This means that the content is not valid XML
-			throw std::invalid_argument("XML content is not valid XML");
-		}
-		// Now, find the end tag. While we're at it, save the child's content.
-		std::string end_tag = "</" + child_name + ">";
+	if (trim(xml_str, "\n \t").empty()) {
+		throw std::runtime_error("Empty xml string.");
+	}
+	while (stri(xml_str, i) && stri(xml_str, i) != '<')
 		i++;
-		while (xml_content.substr(i, end_tag.size()) != end_tag) {
-			child_content += xml_content[i];
+	if (stri(xml_str, i + 1) == '/')
+		throw std::runtime_error("First tag is a closing tag.");
+	std::string _tag;
+	while (stri(xml_str, i) && stri(xml_str, i) != '>')
+	{
+		_tag += stri(xml_str, i);
+		i++;
+	}
+	_tag += '>';
+	std::string tag_clean = clean_tag(clean_tag(_tag));
+	return tag_clean;
+}
+
+std::string XML::get_tag_name(const std::string &xml_tag)
+{
+	size_t i = 1;
+	std::string tag_name;
+	if (xml_tag.empty()) {
+		throw std::runtime_error("Empty xml tag.");
+	}
+	while (!is_whitespace(stri(xml_tag, i)) && stri(xml_tag, i) && stri(xml_tag, i) != '>')
+	{
+		tag_name += stri(xml_tag, i);
+		i++;
+	}
+
+	return tag_name;
+}
+
+ordered_map<std::string, std::string> XML::get_attributes(const std::string &xml_str)
+{
+	ordered_map<std::string, std::string> attrs;
+
+	if (xml_str.empty()) {
+		return attrs;
+	}
+
+	std::string allowed_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
+	size_t i = 1;
+
+	while (!is_whitespace(stri(xml_str, i)) && stri(xml_str, i) != '>')
+		i++;
+
+	while (stri(xml_str, i) && stri(xml_str, i) != '>')
+	{
+		std::string attribute_name;
+		std::string attribute_value;
+		while (stri(xml_str, i) && is_whitespace(stri(xml_str, i)))
+			i++;
+		if (stri(xml_str, i) == '>' || (stri(xml_str, i) == '/' && stri(xml_str, i + 1) == '>'))
+			break;
+		while (stri(xml_str, i) && stri(xml_str, i) != '=')
+		{
+			attribute_name += stri(xml_str, i);
 			i++;
 		}
-		// We found the end tag. Now, save the child
-		std::string child_xml_string = "<" + child_name + child_attributes + ">" + child_content + end_tag;
-		children_strings.push_back(child_xml_string);
-
-		// skip to the end of the end tag
-		i += end_tag.size();
-
-		// If we're at the end of the content, we're done
-		if (i == xml_content.length()) break;
+		if (stri(xml_str, i) != '=')
+			throw std::invalid_argument("Attribute name not followed by '='.");
+		i++;
+		while (stri(xml_str, i) && stri(xml_str, i) != '"')
+			i++;
+		if (stri(xml_str, i) != '"')
+			throw std::invalid_argument("Attribute value not enclosed in '\"'.");
+		i++;
+		while (stri(xml_str, i) && stri(xml_str, i) != '"')
+		{
+			attribute_value += stri(xml_str, i);
+			i++;
+		}
+		if (stri(xml_str, i) != '"')
+			throw std::invalid_argument("Attribute value not enclosed in '\"'.");
+		i++;
+		if (attribute_name.empty() || attribute_value.empty())
+			throw std::invalid_argument("Attribute name or value is empty.");
+		else if (attrs.contains(attribute_name))
+			throw std::invalid_argument("Attribute name is not unique.");
+		else if (attribute_name == "content")
+			throw std::invalid_argument("Attribute name \"content\" is reserved.");
+		for (size_t j = 0; j < attribute_name.length(); j++)
+			if (allowed_chars.find(attribute_name[j]) == std::string::npos)
+				throw std::invalid_argument("Attribute name contains invalid characters.");
+		attrs.insert(attribute_name, attribute_value);
 	}
-	for (std::vector<std::string>::iterator it = children_strings.begin(); it != children_strings.end(); it++) {
-		XML child(*it, -1);
-		add_child(&child);
+
+	return attrs;
+}
+
+std::string XML::get_xml_content(const std::string &xml_string) {
+	if (trim(xml_string, " \n\t").empty()) {
+		return "";
 	}
+
+	std::string content;
+	std::string tag = XML::get_first_tag(xml_string);
+	std::string tag_name = XML::get_tag_name(tag);
+
+	std::string end_tag = "</" + tag_name + ">";
+	size_t end_tag_pos = xml_string.find(end_tag);
+	if (end_tag_pos == std::string::npos) {
+		return "";
+	}
+	size_t start_tag_pos = xml_string.find(tag);
+	if (start_tag_pos == std::string::npos) {
+		return "";
+	}
+	size_t content_start = start_tag_pos + tag.length();
+	size_t content_end = end_tag_pos;
+	content = xml_string.substr(content_start, content_end - content_start);
+
+	return content;
+}
+
+std::string XML::get_first_xml_object(const std::string &xml_string, size_t pos)
+{
+	if (pos <= xml_string.length()) {
+		std::string new_xml_string = xml_string.substr(pos);
+		return get_first_xml_object_raw(new_xml_string);
+	}
+	return "";
+}
+
+std::string XML::get_first_xml_object_raw(const std::string &xml_string)
+{
+	if (trim(xml_string, "\n \t").empty()) {
+		return "";
+	}
+
+	std::string content;
+	std::string tag = XML::get_first_tag(xml_string);
+	std::string tag_name = XML::get_tag_name(tag);
+	if (tag_name.empty())
+		throw std::runtime_error("No opening tag was found or was empty. (tag: " + tag + ", tag_name: " + tag_name +")\nString:\n"+xml_string);
+
+	// Check if self-closing
+	if (stri(tag, tag.length() - 2) == '/') {
+		return tag;
+	}
+
+	std::string end_tag = "</" + tag_name + ">";
+	size_t end_tag_pos = xml_string.find(end_tag);
+	if (end_tag_pos == std::string::npos) {
+		throw std::runtime_error("No closing tag (" + end_tag + ") was found.");
+	}
+	size_t start_tag_pos = xml_string.find(tag);
+	if (start_tag_pos == std::string::npos) {
+		throw std::runtime_error("No opening tag was found.");
+	}
+	size_t content_end = end_tag_pos + end_tag.length();
+	content = xml_string.substr(0, content_end);
+
+	return content;
+}
+
+std::string XML::get_first_xml_object(const std::string &xml_string)
+{
+	if (xml_string.empty()) {
+		return "";
+	}
+
+	std::string content;
+	std::string tag = XML::get_first_tag(xml_string);
+	std::string tag_name = XML::get_tag_name(tag);
+
+	// Check if self-closing
+	if (tag.substr(tag.length() - 2) == "/>") {
+		return tag;
+	}
+
+	std::string end_tag = "</" + tag_name + ">";
+	size_t end_tag_pos = xml_string.find(end_tag);
+	if (end_tag_pos == std::string::npos) {
+		return "";
+	}
+	size_t start_tag_pos = xml_string.find(tag);
+	if (start_tag_pos == std::string::npos) {
+		return "";
+	}
+	size_t content_start = start_tag_pos;
+	size_t content_end = end_tag_pos + end_tag.length();
+	content = xml_string.substr(content_start, content_end - content_start);
+
+	return content;
 }
 
 bool XML::is_whitespace(char c) {
@@ -231,7 +341,7 @@ std::vector<std::string> XML::get_attribute_names() const {
 
 std::string XML::get_value() const {
 	if (has_content) {
-		return attributes["content"];
+		return attributes["__content__"];
 	} else {
 		return "";
 	}
@@ -277,7 +387,7 @@ std::string XML::to_string_n(int indent, int level) const {
 	}
 	xml_string += indent_string + "<" + tag;
 	for (std::vector<std::string>::const_iterator it = attributes.begin(); it != attributes.end(); it++) {
-		if (*it != "content") {
+		if (*it != "__content__") {
 			xml_string += " " + *it + "=\"" + attributes[*it] + "\"";
 		}
 	}
@@ -297,7 +407,7 @@ std::string XML::to_string_n(int indent, int level) const {
 			}
 			xml_string += indent_string + "</" + tag + ">";
 		} else if (has_content) {
-			xml_string += attributes["content"] + "</" + tag + ">";
+			xml_string += attributes["__content__"] + "</" + tag + ">";
 		}
 		if (indent > 0) {
 			xml_string += "\n";
@@ -313,8 +423,9 @@ std::ostream &operator<<(std::ostream &os, const XML &xml) {
 
 XML *XML::get_child(const std::string &child_name) const {
 	std::string _tag = child_name.substr(0, child_name.find('.'));
+	std::string _child_name = child_name.substr(child_name.find('.') + 1);
 	if (!_has_child(_tag)) {
-		throw std::invalid_argument("No child with name \"" + _tag + "\"");
+		throw std::invalid_argument("\"" + _tag + "\" has no child with name \"" + _child_name + "\"");
 	}
 	std::vector<XML*> _children = _get_children(_tag);
 	for (std::vector<XML*>::iterator it = _children.begin(); it != _children.end(); it++) {
@@ -326,7 +437,7 @@ XML *XML::get_child(const std::string &child_name) const {
 			continue;
 		}
 	}
-	throw std::invalid_argument("No child with name \"" + _tag + "\"");
+	throw std::invalid_argument("\"" + _tag + "\" has no child with name \"" + _child_name + "\"");
 }
 
 bool XML::has_child(const std::string &child_name) const {
@@ -371,4 +482,16 @@ void XML::remove_child(const std::string &child_tag, const size_t child_id) {
 
 void XML::add_attribute(const std::string &attribute_name, const std::string &attribute_value) {
 	attributes.insert(attribute_name, attribute_value);
+}
+
+const std::string &XML::get_tag() const {
+	return tag;
+}
+
+size_t XML::get_id() const {
+	return id;
+}
+
+void XML::set_tag(const std::string &tag) {
+	this->tag = tag;
 }

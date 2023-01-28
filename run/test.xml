@@ -1,3 +1,10 @@
-<xml attr="yeet">
-    <server name="test"/>
+<xml attr="345">
+    <testA>Yeet</testA>
+    <testB>
+        <testC></testC>
+    </testB>
+    <testD path="/">
+        <testE>----------</testE>
+        <testF test="yeet">vdbfd</testF>
+    </testD>
 </xml>

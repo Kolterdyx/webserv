@@ -102,7 +102,7 @@ template<typename K, typename V>
 std::ostream &operator<<(std::ostream &os, const ordered_map<K, V> &map) {
 	os << "{\n";
 	for (typename std::vector<K>::const_iterator it = map._keys.begin(); it != map._keys.end(); ++it) {
-		os << "  " << *it << ": " << map[*it] << "\n";
+		os << "  \"" << *it << "\": \"" << map[*it] << "\"\n";
 	}
 	os << "}";
 	return os;

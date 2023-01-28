@@ -4,10 +4,12 @@
 #include "XML.hpp"
 #include "ordered_map.hpp"
 
+
+
 int main() {
 	std::ifstream file;
 
-	file.open("test.xml");
+	file.open("run/config.xml");
 	std::string xml_string;
 	std::string line;
 	if (file.is_open()) {
@@ -17,9 +19,11 @@ int main() {
 	}
 	file.close();
 
-	XML test("<xml>\n    <server/>\n</xml>\n");
+	XML test(xml_string);
 
-	std::cout << "Hello, World!" << std::endl;
+	std::cout << "---------------------\n";
+	std::cout << test.to_string(1) << "\n";
+	std::cout << "---------------------\n";
 
-	std::cout << test << std::endl;
+
 }
