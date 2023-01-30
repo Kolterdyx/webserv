@@ -2,7 +2,7 @@
 #define WEBSERVER_HPP
 
 #include <iostream>
-#include "XMLDocument.hpp"
+#include "XML/XMLDocument.hpp"
 
 class Webserver {
 private:

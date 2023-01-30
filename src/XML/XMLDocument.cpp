@@ -1,8 +1,8 @@
 
 #include <sstream>
 #include <fstream>
-#include "XMLDocument.hpp"
-#include "XMLAccessError.hpp"
+#include "XML/XMLDocument.hpp"
+#include "XML/XMLAccessError.hpp"
 
 const XMLElement * XMLDocument::getRoot() const {
     return root;

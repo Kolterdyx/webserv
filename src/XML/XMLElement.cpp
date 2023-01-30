@@ -3,10 +3,10 @@
 //
 
 #include <sstream>
-#include "XMLElement.hpp"
-#include "XMLParseError.hpp"
-#include "XMLAccessError.hpp"
-#include "XMLModifyError.hpp"
+#include "XML/XMLElement.hpp"
+#include "XML/XMLParseError.hpp"
+#include "XML/XMLAccessError.hpp"
+#include "XML/XMLModifyError.hpp"
 
 XMLElement::XMLElement(const std::string &name) {
     this->name = name;
