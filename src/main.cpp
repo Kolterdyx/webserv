@@ -11,7 +11,7 @@ int main() {
 //	std::cout << "---------------------\n";
 
     // TODO: Add support for multiple attributes and :not()
-    std::vector<XMLElement *> elements = test.query("/@[@attr='yeet']");
+    std::vector<XMLElement *> elements = test.query("/xml/server/routes/*/[@enabled='true']");
     std::cout << elements << "\n";
 //    for (size_t i = 0; i < elements.size(); i++) {
 //        std::cout << "Removing " << elements[i]->getName() << "\n";

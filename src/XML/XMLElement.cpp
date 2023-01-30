@@ -543,7 +543,7 @@ std::vector<XMLElement *> XMLElement::query(const std::string &selector) const {
             } else {
                 std::vector<XMLElement*> subResult = child->query(restSelector);
                 result.insert(result.end(), subResult.begin(), subResult.end());
-                if (firstSelector.substr(0, 2) == "**" || firstSelector.substr(0, 1) == "@") {
+                if (firstSelector.substr(0, 1) == "@") {
                     subResult = child->query(firstSelector + "/" + restSelector);
                     result.insert(result.end(), subResult.begin(), subResult.end());
                 }
@@ -588,7 +588,7 @@ bool XMLElement::matchesSelector(std::string selector) const {
         name = selector.substr(0);
         selector = "";
     }
-    if (!name.empty() && name != this->name && name != "*" && name != "**" && name != "@")
+    if (!name.empty() && name != this->name && name != "*" && name != "@")
         return false;
 
     // Check if selector has a not clause. If so, make sure to extract all the content inside the parentheses.
