@@ -25,5 +25,4 @@ int main() {
 //    std::cout << test.query("/xml/server[@name='test']/error_pages/error_page[@status='502']") << "\n";
 //    std::cout << test.query("/xml/server[@name='test']/routes/route[@path='/someotherpath']") << "\n";
 
-
 }

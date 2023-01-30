@@ -103,7 +103,7 @@ void XMLDocument::fromFile(const std::string &filename) {
 std::vector<XMLElement *> XMLDocument::query(const std::string &query) const {
     std::vector<XMLElement *> result;
 
-    std::vector<std::string> queries = split(query, ' ');
+    std::vector<std::string> queries = split(query, ';');
 
     // queries is a vector of CSS selectors
     // Parse each selector and add the elements that match to the result vector
@@ -114,7 +114,8 @@ std::vector<XMLElement *> XMLDocument::query(const std::string &query) const {
         std::vector<XMLElement *> elements = tmpRoot->query(selector);
         result.insert(result.end(), elements.begin(), elements.end());
     }
-
+    tmpRoot->removeChild(root);
+    delete tmpRoot;
     return result;
 }
 

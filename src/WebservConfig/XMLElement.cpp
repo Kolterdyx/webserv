@@ -385,7 +385,6 @@ void XMLElement::removeChild(XMLElement *element) {
         XMLElement *child = *it;
         if (child == element) {
             children.erase(it);
-            delete child;
             return;
         }
     }
