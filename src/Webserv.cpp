@@ -2,7 +2,7 @@
 
 void Webserver::run()
 {
-	printf("Hello World!\n");
+    std::cout << "Running webserver" << std::endl;
 }
 
 Webserver::Webserver() {
@@ -24,6 +24,6 @@ Webserver::~Webserver() {
 
 }
 
-Webserver::Webserver(const XML &config) {
+Webserver::Webserver(const XMLDocument &config) {
 	this->config = config;
 }

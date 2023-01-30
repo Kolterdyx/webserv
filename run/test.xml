@@ -1,10 +1,35 @@
-<xml attr="345">
-    <testA>Yeet</testA>
-    <testB>
-        <testC></testC>
-    </testB>
-    <testD path="/">
-        <testE>----------</testE>
-        <testF test="yeet">vdbfd</testF>
-    </testD>
-</xml>
+<root>
+    <server name="test">
+        <client_max_body_size>100000000</client_max_body_size>
+        <root>/var/www</root>
+        <index>index.html</index>
+        <error_pages>
+            <error_page status="404" path="path/to/404.html"/>
+            <error_page status="500" path="path/to/50x.html"/>
+            <error_page status="501" path="path/to/50x.html"/>
+            <error_page status="502" path="path/to/50x.html"/>
+        </error_pages>
+        <routes>
+            <route path="/somepath">
+                <root>/var/www/another/path</root>
+                <directory_listing enabled="false"/>
+                <index>not_the_default.html</index>
+            </route>
+            <route path="/someotherpath">
+                <redirect code="301" path="path/to/redirect.html">http://localhost:8080/</redirect>
+            </route>
+            <route path="/dirlist">
+                <directory_listing enabled="true"/>
+                <root>/var/www/mydir</root>
+                <directory_index>directories.html</directory_index>
+            </route>
+            <route path="/usecgi">
+                <cgi enabled="true" path="/usr/bin/php" ext=".php"/>
+                <root>/var/www/mydir</root>
+                <index>index.php</index>
+            </route>
+        </routes>
+        <listen>
+            <address host="localhost" port="8080"/>
+            <address host=""
+</root>

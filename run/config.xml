@@ -1,14 +1,17 @@
 <xml attr="yeet">
     <server name="test">
-        <client_max_body_size>100000000</client_max_body_size>
-
+        <!-- Max body size in bytes (1MB = 1024KB = 1048576B) -->
+        <client_max_body_size>10485760</client_max_body_size>
+        <!-- Default content root for the web server -->
         <root>/var/www</root>
+        <!-- Default index file for the web server -->
         <index>index.html</index>
+        <!-- Custom error pages for each error code -->
         <error_pages>
-            <c404>/404.html</c404>
-            <c500>/50x.html</c500>
-            <c501>/50x.html</c501>
-            <c502>/50x.html</c502>
+            <error_page status="404" path="path/to/404.html"/>
+            <error_page status="500" path="path/to/50x.html"/>
+            <error_page status="501" path="path/to/50x.html"/>
+            <error_page status="502" path="path/to/50x.html"/>
         </error_pages>
         <routes>
             <route path="/somepath">
@@ -17,7 +20,7 @@
                 <index>not_the_default.html</index>
             </route>
             <route path="/someotherpath">
-                <redirect code="301">http://localhost:8080/</redirect>
+                <redirect code="301" path="path/to/redirect.html">http://localhost:8080/</redirect>
             </route>
             <route path="/dirlist">
                 <directory_listing enabled="true"/>
@@ -31,8 +34,9 @@
             </route>
         </routes>
         <listen>
-            <address port="8080">localhost</address>
-            <address port="8081">0.0.0.0</address>
+            <address host="localhost" port="8080"/>
+            <address host="0.0.0.0"/>
+            <address port="8081"/>
         </listen>
     </server>
 </xml>

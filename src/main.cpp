@@ -1,29 +1,29 @@
 #include <iostream>
-#include <fstream>
-#include <unistd.h>
-#include "XML.hpp"
-#include "ordered_map.hpp"
-
+#include "XMLDocument.hpp"
 
 
 int main() {
-	std::ifstream file;
+	XMLDocument test;
+    test.fromFile("run/config.xml");
 
-	file.open("run/config.xml");
-	std::string xml_string;
-	std::string line;
-	if (file.is_open()) {
-		while (std::getline(file, line)) {
-			xml_string += line + "\n";
-		}
-	}
-	file.close();
+//	std::cout << "---------------------\n";
+//	std::cout << test << "\n";
+//	std::cout << "---------------------\n";
 
-	XML test(xml_string);
-
-	std::cout << "---------------------\n";
-	std::cout << test.to_string(1) << "\n";
-	std::cout << "---------------------\n";
+//    std::cout << test.query("/xml") << "\n";
+//    std::cout << test.query("/xml/server") << "\n";
+//    std::cout << test.query("/xml/server:not([@name='dscf'])[]") << "\n";
+//    std::cout << test.query("/xml/server[@name='test']/root") << "\n";
+//    std::cout << test.query("/xml/server[@name='test']/index") << "\n";
+//    std::cout << test.query("/xml/server[@name='test']/client_max_body_size") << "\n";
+//    std::cout << test.query("/xml/server[@name='test']/error_pages") << "\n";
+//    std::cout << test.query("/xml/server[@name='test']/routes/route[directory_listing])") << "\n";
+//    std::cout << test.query("/xml/server[@name='test']/listen") << "\n";
+//    std::cout << test.query("/xml/server[@name='test']/error_pages/error_page:not([@status='500'])[@path='path/to/50x.html']") << "\n";
+//    std::cout << test.query("/xml/server[@name='test']/error_pages/error_page[@status='404']") << "\n";
+//    std::cout << test.query("/xml/server[@name='test']/error_pages/error_page[@status='501']") << "\n";
+//    std::cout << test.query("/xml/server[@name='test']/error_pages/error_page[@status='502']") << "\n";
+//    std::cout << test.query("/xml/server[@name='test']/routes/route[@path='/someotherpath']") << "\n";
 
 
 }
