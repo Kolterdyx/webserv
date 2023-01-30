@@ -12,12 +12,14 @@ XMLElement::XMLElement(const std::string &name) {
     this->name = name;
     _hasContent = false;
     _isComment = false;
+    parent = NULL;
 }
 
 XMLElement::XMLElement() {
     this->name = "element";
     _hasContent = false;
     _isComment = false;
+    parent = NULL;
 }
 
 XMLElement::XMLElement(const std::string& name, const std::map<std::string, std::string>& attributes) {
@@ -25,6 +27,7 @@ XMLElement::XMLElement(const std::string& name, const std::map<std::string, std:
     this->attributes = attributes;
     _hasContent = false;
     _isComment = false;
+    parent = NULL;
 }
 
 std::string XMLElement::getName() const {
@@ -201,7 +204,6 @@ XMLElement *XMLElement::fromString(const std::string &xml) {
                 break;
             }
             element->addChild(XMLElement::fromString(*it));
-
         }
     }
 
@@ -215,6 +217,7 @@ void XMLElement::addChild(XMLElement *element) {
         throw XMLModifyError("Element has text content.");
     }
     children.push_back(element);
+    element->parent = this;
 }
 
 std::vector<std::string> XMLElement::splitXML(std::string xmlString) {
@@ -357,6 +360,7 @@ XMLElement *XMLElement::createChild(const std::string &name) {
         throw XMLModifyError("Cannot add child to element with content. Use setContent() first to remove the content.");
     XMLElement *child = new XMLElement(name);
     children.push_back(child);
+    child->parent = this;
     return child;
 }
 
@@ -385,6 +389,7 @@ void XMLElement::removeChild(XMLElement *element) {
         XMLElement *child = *it;
         if (child == element) {
             children.erase(it);
+            child->parent = NULL;
             return;
         }
     }
@@ -398,6 +403,7 @@ void XMLElement::clearChildren() {
 
     for (std::vector<XMLElement*>::iterator it = children.begin(); it != children.end(); ++it) {
         XMLElement *child = *it;
+        child->parent = NULL;
         delete child;
     }
     children.clear();
@@ -600,7 +606,7 @@ bool XMLElement::matchesSelector(std::string selector) const {
         name = selector.substr(0);
         selector = "";
     }
-    if (!name.empty() && name != this->name)
+    if (!name.empty() && name != this->name && name != "*")
         return false;
 
     // Check if selector has a not clause. If so, make sure to extract all the content inside the parentheses.
@@ -632,16 +638,16 @@ bool XMLElement::matchesSelector(std::string selector) const {
     std::vector<std::string> selectors;
     if (selector.find('[') != std::string::npos) {
         int start = selector.find('[');
-        int end = start;
+        size_t end = start;
         int depth = 1;
-        while (depth > 0) {
+        while (depth > 0 && end < selector.length()) {
             if (selector[end] == '[')
                 depth++;
             else if (selector[end] == ']')
                 depth--;
             end++;
         }
-        std::string part = selector.substr(start, end - start - 3);
+        std::string part = selector.substr(start, end - start);
         selectors.push_back(part);
         selector = selector.substr(part.length());
     }
@@ -685,39 +691,9 @@ bool XMLElement::matchesSelector(std::string selector) const {
         }
     }
     return true;
+}
 
-
-//    std::vector<std::string> attributeSelectors = split(selector, '[');
-//    for (std::vector<std::string>::const_iterator it = attributeSelectors.begin(); it != attributeSelectors.end(); ++it) {
-//        std::string attributeSelector = (*it).substr(0, (*it).find(']'));
-//        if (attributeSelector.empty())
-//            continue;
-//        if (attributeSelector[0] == '@')
-//            attributeSelector = attributeSelector.substr(1);
-//        else
-//            throw XMLParseError("Invalid attribute selector: " + attributeSelector);
-//        // Check if attributeSelector has a value
-//        std::string attribute;
-//        std::string value;
-//        if (attributeSelector.find('=') != std::string::npos) {
-//            attribute = attributeSelector.substr(0, attributeSelector.find('='));
-//            value = attributeSelector.substr(attributeSelector.find('=') + 1);
-//            if (value[0] == '\'' || value[0] == '"')
-//                value = value.substr(1);
-//            if (value[value.size() - 1] == '\'' || value[value.size() - 1] == '"')
-//                value = value.substr(0, value.size() - 1);
-//        } else {
-//            attribute = attributeSelector;
-//        }
-//
-//        // Check if this element has the specified attribute
-//        if (!hasAttribute(attribute))
-//            return false;
-//
-//        // Check if the attribute has the specified value
-//        if (!value.empty() && getAttribute(attribute) != value)
-//            return false;
-//    }
-    return true;
+void XMLElement::setParent(XMLElement *parent) {
+    this->parent = parent;
 }
 

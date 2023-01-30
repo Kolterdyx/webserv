@@ -54,6 +54,8 @@ private:
 
     bool _isComment;
 
+    XMLElement* parent;
+
     static std::vector<std::string> splitXML(std::string xmlString);
 
     static size_t find_first_of_unquoted(std::string haystack, std::string needles, size_t start, size_t end);
@@ -63,6 +65,8 @@ private:
     static std::string trim(std::string str, std::string chars);
 
     std::string toPrettyString(int indent, int level) const;
+
+    void setParent(XMLElement* parent);
 
 public:
 
