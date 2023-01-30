@@ -31,12 +31,15 @@
                 <cgi enabled="true" path="/usr/bin/php" ext=".php"/>
                 <root>/var/www/mydir</root>
                 <index>index.php</index>
+                <!-- Test comment 3 -->
             </route>
         </routes>
         <listen>
             <address host="localhost" port="8080"/>
             <address host="0.0.0.0"/>
             <address port="8081"/>
+            <!-- Test comment 2 -->
         </listen>
     </server>
+    <!-- Test comment 1 -->
 </xml>

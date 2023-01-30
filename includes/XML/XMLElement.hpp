@@ -68,6 +68,8 @@ private:
 
     void setParent(XMLElement* parent);
 
+    bool visible;
+
 public:
 
     /**
@@ -243,6 +245,9 @@ public:
     std::vector<std::string> split(const std::string &str, char split_char) const;
 
     bool matchesSelector(std::string selector) const;
+
+    void remove();
+
 };
 
 
