@@ -23,12 +23,6 @@ private:
 
     static std::vector<std::string> split(const std::string &str, char split_char);
 
-    std::vector<XMLElement*> getChildren(const std::string& selector) const;
-
-    XMLElement* getChild(const std::string& selector) const;
-
-
-
 public:
 
     /**
@@ -85,7 +79,7 @@ public:
      * @param value The attribute value to query.
      * @return A vector of all elements with the given name, attribute and value.
      */
-    std::vector<XMLElement *> query(const std::string &query) const;
+    XMLElementVector query(const std::string &query) const;
 
     /**
      * @brief Create XMLDocument object from XMLDocument file.

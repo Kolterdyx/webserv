@@ -31,6 +31,9 @@
                 <cgi enabled="true" path="/usr/bin/php" ext=".php"/>
                 <root>/var/www/mydir</root>
                 <index>index.php</index>
+                <error_pages>
+                    <error_page status="403" path="path/to/403.html"/>
+                </error_pages>
                 <!-- Test comment 3 -->
             </route>
         </routes>
@@ -42,4 +45,8 @@
         </listen>
     </server>
     <!-- Test comment 1 -->
+    <server name="patata"/>
+    <server>
+        <!-- comment -->
+    </server>
 </xml>

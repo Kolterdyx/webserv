@@ -55,7 +55,7 @@ void XMLElement::setAttributes(const std::map<std::string, std::string>& attribu
     this->attributes = attributes;
 }
 
-std::vector<XMLElement *> XMLElement::getChildren() const {
+XMLElementVector XMLElement::getChildren() const {
     if (isComment())
         return std::vector<XMLElement *>(); // Return empty vector.
     if (!hasContent())
@@ -466,7 +466,7 @@ std::string XMLElement::toPrettyString(int indent, int level) const {
             str += textContent;
         } else {
             str += "\n";
-            for (std::vector<XMLElement*>::const_iterator it = children.begin(); it != children.end(); ++it) {
+            for (XMLElementVector::const_iterator it = children.begin(); it != children.end(); ++it) {
                 const XMLElement *child = *it;
                 str += child->toPrettyString(indent, level + 1) + "\n";
             }
@@ -506,7 +506,7 @@ bool XMLElement::hasChild(const std::string &name) const {
     if (hasContent() || isComment())
         return false;
 
-    for (std::vector<XMLElement*>::const_iterator it = children.begin(); it != children.end(); ++it) {
+    for (XMLElementVector::const_iterator it = children.begin(); it != children.end(); ++it) {
         const XMLElement *child = *it;
         if (child->getName() == name)
             return true;
@@ -520,7 +520,7 @@ std::vector<XMLElement *> XMLElement::query(const std::string &selector) const {
     if (hasContent() || isComment())
         return std::vector<XMLElement*>();
 
-    std::vector<XMLElement*> result;
+    XMLElementVector result;
     std::vector<std::string> selectors = split(selector, '/');
     std::string firstSelector = selectors[0];
     std::string restSelector;
@@ -535,13 +535,13 @@ std::vector<XMLElement *> XMLElement::query(const std::string &selector) const {
 
     // Check if any of the children match the first selector.
     // If so, add them to the result vector.
-    for (std::vector<XMLElement*>::const_iterator it = children.begin(); it != children.end(); ++it) {
+    for (XMLElementVector::const_iterator it = children.begin(); it != children.end(); ++it) {
         XMLElement *child = *it;
         if (child->matchesSelector(firstSelector)) {
             if (restSelector.empty()) {
                 result.push_back(child);
             } else {
-                std::vector<XMLElement*> subResult = child->query(restSelector);
+                XMLElementVector subResult = child->query(restSelector);
                 result.insert(result.end(), subResult.begin(), subResult.end());
                 if (firstSelector.substr(0, 1) == "@") {
                     subResult = child->query(firstSelector + "/" + restSelector);
@@ -549,7 +549,7 @@ std::vector<XMLElement *> XMLElement::query(const std::string &selector) const {
                 }
             }
         } else if (firstSelector.substr(0, 1) == "@") {
-            std::vector<XMLElement*> subResult;
+            XMLElementVector subResult;
             if (restSelector.empty()) {
                 result.push_back(child);
                 subResult = child->query(firstSelector);
@@ -723,5 +723,9 @@ void XMLElement::remove() {
     if (parent)
         parent->removeChild(this);
     visible = false;
+}
+
+XMLElement *XMLElement::getParent() {
+	return parent;
 }
 

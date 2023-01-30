@@ -81,14 +81,6 @@ std::vector<std::string> XMLDocument::split(const std::string &str, char split_c
     return result;
 }
 
-XMLElement *XMLDocument::getChild(const std::string &selector) const {
-    std::vector<XMLElement *> elements = query(selector);
-    if (elements.empty()) {
-        return NULL;
-    }
-    return elements[0];
-}
-
 void XMLDocument::fromFile(const std::string &filename) {
     std::ifstream file(filename.c_str());
     std::string xml;
@@ -100,8 +92,8 @@ void XMLDocument::fromFile(const std::string &filename) {
 }
 
 
-std::vector<XMLElement *> XMLDocument::query(const std::string &query) const {
-    std::vector<XMLElement *> result;
+XMLElementVector XMLDocument::query(const std::string &query) const {
+    XMLElementVector result;
 
     std::vector<std::string> queries = split(query, ';');
 
@@ -111,111 +103,10 @@ std::vector<XMLElement *> XMLDocument::query(const std::string &query) const {
     tmpRoot->addChild(root);
     for (size_t i = 0; i < queries.size(); i++) {
         std::string selector = queries[i].substr(1, queries[i].size() - 1);
-        std::vector<XMLElement *> elements = tmpRoot->query(selector);
+        XMLElementVector elements = tmpRoot->query(selector);
         result.insert(result.end(), elements.begin(), elements.end());
     }
     tmpRoot->removeChild(root);
     delete tmpRoot;
     return result;
 }
-
-
-//{
-//
-//    // Check if an element name is specified
-//    std::string elementName;
-//    size_t pos = selector.find_first_of("[:");
-//    elementName = selector.substr(0, pos);
-//
-//    // Check if a not selector is specified
-//    bool notSelector = false;
-//    std::string notSelectorString;
-//    if (selector.find(":not(") != std::string::npos) {
-//        notSelector = true;
-//        // Get the string between the parentheses
-//        // Must be capable of handling nested parentheses (e.g. :not(other test:not([attribute=value])))
-//        size_t start = selector.find(":not(") + 5;
-//        size_t end = start;
-//        int parentheses = 1;
-//        while (parentheses > 0) {
-//            if (selector[end] == '(') {
-//                parentheses++;
-//            } else if (selector[end] == ')') {
-//                parentheses--;
-//            }
-//            end++;
-//        }
-//        notSelectorString = selector.substr(start, end - start - 1);
-//    }
-//
-//    // Check if an attributes are specified
-//    std::string attribute;
-//    bool hasAttribute = false;
-//    std::string value;
-//    bool hasValue = false;
-//    pos = selector.find_first_of("[");
-//    if (pos != std::string::npos) {
-//        hasAttribute = true;
-//        size_t end = selector.find_first_of("]");
-//        if (end == std::string::npos) {
-//            throw XMLAccessError("Invalid selector: " + selector);
-//        }
-//        std::string attributeString = selector.substr(pos + 1, end - pos - 1);
-//        size_t equals = attributeString.find_first_of("=");
-//        if (equals != std::string::npos) {
-//            attribute = attributeString.substr(0, equals);
-//            value = attributeString.substr(equals + 1);
-//            hasValue = true;
-//        } else {
-//            attribute = attributeString;
-//        }
-//    }
-//
-//    // Get all elements that match the element name
-//    std::vector<XMLElement *> elements;
-//    if (elementName.empty()) {
-//        elements = query("*");
-//    } else {
-//        elements = query(elementName);
-//    }
-//
-//    // Filter the elements based on the attribute and value
-//    // If a not selector is specified, filter out the elements that have the attribute. If a value is specified, filter
-//    // out the elements that have the attribute with the specified value.
-//
-//    std::vector<XMLElement *> tmp;
-//    for (size_t i = 0; i < elements.size(); i++) {
-//        if (notSelector) {
-//            std::vector<XMLElement *> notElements = query(notSelectorString);
-//            bool found = false;
-//            for (size_t j = 0; j < notElements.size(); j++) {
-//                if (elements[i] == notElements[j]) {
-//                    found = true;
-//                    break;
-//                }
-//            }
-//            if (!found) {
-//                tmp.push_back(elements[i]);
-//            }
-//        } else {
-//            tmp.push_back(elements[i]);
-//        }
-//    }
-//    elements = tmp;
-//    std::vector<XMLElement *> result;
-//    for (size_t i = 0; i < elements.size(); i++) {
-//        if (hasAttribute) {
-//            if (hasValue) {
-//                if (elements[i]->hasAttribute(attribute) && elements[i]->getAttribute(attribute) == value) {
-//                    result.push_back(elements[i]);
-//                }
-//            } else {
-//                if (elements[i]->hasAttribute(attribute)) {
-//                    result.push_back(elements[i]);
-//                }
-//            }
-//        } else {
-//            result.push_back(elements[i]);
-//        }
-//    }
-//}

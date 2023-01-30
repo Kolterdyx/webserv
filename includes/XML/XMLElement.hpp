@@ -30,6 +30,9 @@ namespace std {
     }
 }
 
+#define XMLElementVector std::vector<XMLElement*>
+#define XMLAttributeMap std::map<std::string, std::string>
+
 /**
  * @brief XMLElement class.
  * @details This class is used to represent an XMLDocument element. This class is used by the XMLDocument class to represent the XMLDocument file.
@@ -44,9 +47,9 @@ private:
 
     std::string name;
 
-    std::map<std::string, std::string> attributes;
+    XMLAttributeMap attributes;
 
-    std::vector<XMLElement*> children;
+    XMLElementVector children;
 
     std::string textContent;
 
@@ -91,7 +94,7 @@ public:
      * @param name The name of the element.
      * @param attributes The attributes of the element.
      */
-    XMLElement(const std::string& name, const std::map<std::string, std::string>& attributes);
+    XMLElement(const std::string& name, const XMLAttributeMap& attributes);
 
     /**
      * @brief Destructor.
@@ -114,19 +117,19 @@ public:
      * @brief Get the attributes of the element.
      * @return The attributes of the element.
      */
-    std::map<std::string, std::string> getAttributes() const;
+    XMLAttributeMap getAttributes() const;
 
     /**
      * @brief Query the element with the given selector.
      * @return The children of the element that match the selector.
      */
-    std::vector<XMLElement*> query(const std::string& selector) const;
+    XMLElementVector query(const std::string& selector) const;
 
     /**
      * @brief Set the attributes of the element.
      * @param attributes The attributes of the element.
      */
-    void setAttributes(const std::map<std::string, std::string>& attributes);
+    void setAttributes(const XMLAttributeMap& attributes);
 
     /**
      * @brief Set or add an attribute to the element.
@@ -155,7 +158,7 @@ public:
      * @brief Get the children of the element.
      * @return The children of the element.
      */
-    std::vector<XMLElement *> getChildren() const;
+    XMLElementVector getChildren() const;
 
     /**
      * @brief Get the textContent of the element.
@@ -248,6 +251,7 @@ public:
 
     void remove();
 
+	XMLElement * getParent();
 };
 
 
