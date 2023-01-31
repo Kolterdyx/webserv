@@ -57,6 +57,29 @@ void UUID::init_srand() {
 	}
 }
 
+uint64_t UUID::getPart1() const {
+	return this->part1;
+}
+
+uint64_t UUID::getPart2() const {
+	return this->part2;
+}
+
+bool UUID::operator<(const UUID &uuid) const {
+	return this->part1 < uuid.part1 || (this->part1 == uuid.part1 && this->part2 < uuid.part2);
+}
+
+bool UUID::operator<=(const UUID &uuid) const {
+	return *this < uuid || *this == uuid;
+}
+
+bool UUID::operator>(const UUID &uuid) const {
+	return !(*this <= uuid);
+}
+
+bool UUID::operator>=(const UUID &uuid) const {
+	return !(*this < uuid);
+}
 
 
 
