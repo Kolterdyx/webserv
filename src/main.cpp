@@ -1,12 +1,17 @@
 #include <iostream>
 #include "XML/XMLDocument.hpp"
 
-int main() {
-	XMLDocument xml;
-    xml.fromFile("run/config.xml");
+int main(int argc, char *argv[]) {
+	if (argc < 2) {
+		std::cout << "Usage: " << argv[0] << " <config>" << std::endl;
+		return 1;
+	}
 
-    // TODO: Add support for multiple attributes and :not()
-    XMLElementVector result = xml.query("/xml/server");
-    std::cout << result << "\n";
+	XMLDocument configXML;
+	configXML.fromFile(argv[1]);
+
+	// TODO: Add support for multiple attributes and :not()
+	XMLElementVector result = configXML.query("/@/*");
+	std::cout << result << "\n";
 	return 0;
 }
