@@ -5,21 +5,22 @@
 #include "XML/XMLAccessError.hpp"
 
 const XMLElement * XMLDocument::getRoot() const {
-    return root;
+    return root->getChildren()[0];
 }
 
-void XMLDocument::setRoot(XMLElement *root) {
-    delete XMLDocument::root;
-    XMLDocument::root = root;
+void XMLDocument::setRoot(XMLElement *elem) {
+	this->root->clearChildren();
+    this->root->addChild(elem);
 }
 
 XMLDocument::XMLDocument(const std::string &rootName) {
-    root = new XMLElement(rootName);
+	root = new XMLElement("__root__");
+    setRoot(new XMLElement(rootName));
 }
 
 
 std::string XMLDocument::toString() const {
-    return root->toPrettyString(4);
+    return toPrettyString(4);
 }
 
 std::ostream &operator<<(std::ostream &os, const XMLDocument &xml) {
@@ -28,13 +29,11 @@ std::ostream &operator<<(std::ostream &os, const XMLDocument &xml) {
 }
 
 void XMLDocument::fromString(const std::string &xml) {
-    XMLElement *root;
-    root = XMLElement::fromString(xml);
-    setRoot(root);
+    setRoot(XMLElement::fromString(xml));
 }
 
 std::string XMLDocument::toPrettyString(int indent) const {
-    return root->toPrettyString(indent);
+    return root->getChildren()[0]->toPrettyString(indent);
 }
 
 XMLDocument::~XMLDocument() {
@@ -97,20 +96,10 @@ XMLElementVector XMLDocument::query(const std::string &query) const {
 
     std::vector<std::string> queries = split(query, ';');
 
-    XMLElement *tmpRoot = new XMLElement("tmpRoot");
-    tmpRoot->addChild(root);
     for (size_t i = 0; i < queries.size(); i++) {
         std::string selector = queries[i].substr(1, queries[i].size() - 1);
-        XMLElementVector elements = tmpRoot->query(selector);
+        XMLElementVector elements = root->query(selector);
         result.insert(result.end(), elements.begin(), elements.end());
     }
-	XMLElementVector::iterator rm;
-	for (XMLElementVector::iterator it = result.begin(); it != result.end(); ++it) {
-		if (**it == *tmpRoot)
-			rm = it;
-	}
-	result.erase(rm);
-    tmpRoot->removeChild(root);
-    delete tmpRoot;
     return result;
 }

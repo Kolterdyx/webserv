@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
 	configXML.fromFile(argv[1]);
 
 	// TODO: Add support for multiple attributes and :not()
-	XMLElementVector result = configXML.query("/@/*");
+	XMLElementVector result = configXML.query("/@*");
 	std::cout << result << "\n";
 	return 0;
 }

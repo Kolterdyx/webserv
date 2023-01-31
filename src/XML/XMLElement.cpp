@@ -552,7 +552,7 @@ std::vector<XMLElement *> XMLElement::query(const std::string &selector) const {
         }
 		if (firstSelector.substr(0, 1) == "@") {
             XMLElementVector subResult;
-			result.push_back(const_cast<XMLElement*>(this));
+//			result.push_back(const_cast<XMLElement*>(this));
             if (restSelector.empty()) {
                 result.push_back(child);
                 subResult = child->query(firstSelector);
