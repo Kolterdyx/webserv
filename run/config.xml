@@ -14,9 +14,7 @@
             <index>not_the_default.html</index>
         </route>
         <route path="/someotherpath">
-            <redirect code="301" path="path/to/redirect.html">
-                http://localhost:8080/
-            </redirect>
+            <redirect code="301" path="path/to/redirect.html">http://localhost:8080/</redirect>
         </route>
         <route path="/dirlist">
             <directory_listing enabled="true"/>
