@@ -10,6 +10,7 @@
 #include <vector>
 #include <iostream>
 #include <stdexcept>
+#include "UUID/UUID.hpp"
 
 
 namespace std {
@@ -61,6 +62,8 @@ private:
 
     XMLElement* parent;
 
+	const UUID uuid;
+
     static std::vector<std::string> splitXML(std::string xmlString);
 
     static size_t find_first_of_unquoted(std::string haystack, std::string needles, size_t start, size_t end);
@@ -102,6 +105,11 @@ public:
      * @brief Destructor.
      */
     ~XMLElement();
+
+	/*
+	 * @brief Comparison operator.
+	 */
+	bool operator==(const XMLElement& element) const;
 
     /**
      * @brief Get the name of the element.
@@ -254,6 +262,8 @@ public:
     void remove();
 
 	XMLElement * getParent();
+
+	UUID getUUID();
 };
 
 

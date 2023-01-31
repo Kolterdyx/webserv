@@ -3,12 +3,13 @@
 //
 
 #include <sstream>
+#include <algorithm>
 #include "XML/XMLElement.hpp"
 #include "XML/XMLParseError.hpp"
 #include "XML/XMLAccessError.hpp"
 #include "XML/XMLModifyError.hpp"
 
-XMLElement::XMLElement(const std::string &name) {
+XMLElement::XMLElement(const std::string &name) : uuid(UUID()) {
     this->name = name;
     _hasContent = false;
     _isComment = false;
@@ -16,7 +17,7 @@ XMLElement::XMLElement(const std::string &name) {
     this->visible = true;
 }
 
-XMLElement::XMLElement() {
+XMLElement::XMLElement() : uuid(UUID()) {
     this->name = "element";
     _hasContent = false;
     _isComment = false;
@@ -24,7 +25,7 @@ XMLElement::XMLElement() {
     this->visible = true;
 }
 
-XMLElement::XMLElement(const std::string& name, const std::map<std::string, std::string>& attributes) {
+XMLElement::XMLElement(const std::string& name, const std::map<std::string, std::string>& attributes) : uuid(UUID()) {
     this->name = name;
     this->attributes = attributes;
     _hasContent = false;
@@ -561,8 +562,19 @@ std::vector<XMLElement *> XMLElement::query(const std::string &selector) const {
             result.insert(result.end(), subResult.begin(), subResult.end());
         }
     }
-	(void)std::unique(result.begin(), result.end());
-    return result;
+	// Remove duplicates
+	XMLElementVector uniqueResult;
+	for (XMLElementVector::const_iterator it = result.begin(); it != result.end(); ++it) {
+		bool found = false;
+		for (XMLElementVector::const_iterator it2 = uniqueResult.begin(); it2 != uniqueResult.end(); ++it2) {
+			found = (**it) == (**it2);
+			if (found)
+				break;
+		}
+		if (!found)
+			uniqueResult.push_back(*it);
+	}
+    return uniqueResult;
 }
 
 bool XMLElement::matchesSelector(std::string selector) const {
@@ -730,5 +742,13 @@ void XMLElement::remove() {
 
 XMLElement *XMLElement::getParent() {
 	return parent;
+}
+
+UUID XMLElement::getUUID() {
+	return uuid;
+}
+
+bool XMLElement::operator==(const XMLElement &element) const {
+	return uuid == element.uuid;
 }
 
