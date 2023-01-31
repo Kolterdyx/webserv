@@ -12,26 +12,6 @@
 #include <stdexcept>
 #include "UUID/UUID.hpp"
 
-
-namespace std {
-    template<typename T>
-    std::ostream &operator<<(std::ostream &os, const std::vector<T> vector) {
-		int i = 0;
-        for (typename std::vector<T>::const_iterator it = vector.begin(); it != vector.end(); it++) {
-            os << i++ << ": " << *it << "\n";
-        }
-        return os;
-    }
-
-    template<typename K, typename V>
-    std::ostream &operator<<(std::ostream &os, const std::map<K, V> map) {
-        for (typename std::map<K, V>::const_iterator it = map.begin(); it != map.end(); it++) {
-            os << it->first << " : " << it->second << "\n";
-        }
-        return os;
-    }
-}
-
 class XMLElement;
 
 typedef std::vector<XMLElement*> XMLElementVector;

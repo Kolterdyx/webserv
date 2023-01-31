@@ -3,6 +3,7 @@
 #define WEBSERV_HPP
 
 #include <iostream>
-#include "Webserv.hpp"
+#include "Webserver.hpp"
+#include "custom_specifications.hpp"
 
 #endif // SERVER_HPP
