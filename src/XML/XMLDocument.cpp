@@ -97,8 +97,6 @@ XMLElementVector XMLDocument::query(const std::string &query) const {
 
     std::vector<std::string> queries = split(query, ';');
 
-    // queries is a vector of CSS selectors
-    // Parse each selector and add the elements that match to the result vector
     XMLElement *tmpRoot = new XMLElement("tmpRoot");
     tmpRoot->addChild(root);
     for (size_t i = 0; i < queries.size(); i++) {
@@ -106,6 +104,12 @@ XMLElementVector XMLDocument::query(const std::string &query) const {
         XMLElementVector elements = tmpRoot->query(selector);
         result.insert(result.end(), elements.begin(), elements.end());
     }
+	XMLElementVector::iterator rm;
+	for (XMLElementVector::iterator it = result.begin(); it != result.end(); ++it) {
+		if (**it == *tmpRoot)
+			rm = it;
+	}
+	result.erase(rm);
     tmpRoot->removeChild(root);
     delete tmpRoot;
     return result;
