@@ -30,8 +30,10 @@ namespace std {
     }
 }
 
-#define XMLElementVector std::vector<XMLElement*>
-#define XMLAttributeMap std::map<std::string, std::string>
+class XMLElement;
+
+typedef std::vector<XMLElement*> XMLElementVector;
+typedef std::map<std::string, std::string> XMLAttributeMap;
 
 /**
  * @brief XMLElement class.
