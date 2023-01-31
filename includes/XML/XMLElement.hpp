@@ -16,8 +16,9 @@
 namespace std {
     template<typename T>
     std::ostream &operator<<(std::ostream &os, const std::vector<T> vector) {
-        for (size_t i = 0; i < vector.size(); i++) {
-            os << i << ": " << vector[i] << "\n";
+		int i = 0;
+        for (typename std::vector<T>::const_iterator it = vector.begin(); it != vector.end(); it++) {
+            os << i++ << ": " << *it << "\n";
         }
         return os;
     }
