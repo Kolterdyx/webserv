@@ -548,8 +548,10 @@ std::vector<XMLElement *> XMLElement::query(const std::string &selector) const {
                     result.insert(result.end(), subResult.begin(), subResult.end());
                 }
             }
-        } else if (firstSelector.substr(0, 1) == "@") {
+        }
+		if (firstSelector.substr(0, 1) == "@") {
             XMLElementVector subResult;
+			result.push_back(const_cast<XMLElement*>(this));
             if (restSelector.empty()) {
                 result.push_back(child);
                 subResult = child->query(firstSelector);
@@ -559,6 +561,7 @@ std::vector<XMLElement *> XMLElement::query(const std::string &selector) const {
             result.insert(result.end(), subResult.begin(), subResult.end());
         }
     }
+	(void)std::unique(result.begin(), result.end());
     return result;
 }
 
