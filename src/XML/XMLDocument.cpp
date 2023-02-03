@@ -57,7 +57,11 @@ XMLElementVector XMLDocument::query(const std::string &query) const {
 	std::string q;
 
     for (size_t i = 0; i < queries.size(); i++) {
-        std::string selector = queries[i].substr(1, queries[i].size() - 1);
+		q = custom::trim(queries[i], " ");
+		if (q[0] != '/') {
+			throw XMLParseError("Query at position " + std::to_string(i) + " does not start with a slash. (/)");
+		}
+        std::string selector = q.substr(1, q.size() - 1);
         XMLElementVector elements = root->query(selector);
         result.insert(result.end(), elements.begin(), elements.end());
     }
