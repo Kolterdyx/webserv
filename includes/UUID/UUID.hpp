@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 
+
 class UUID {
 private:
 	uint64_t part1;
@@ -18,7 +19,9 @@ private:
 
 public:
 
-	// Constructors
+	/**
+	 * Creates a V4 UUID (128 random bits)
+	 */
 	UUID();
 
 	UUID(const UUID &uuid);
