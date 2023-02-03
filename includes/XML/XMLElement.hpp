@@ -236,8 +236,6 @@ public:
      */
     bool isComment() const;
 
-    std::vector<std::string> split(const std::string &str, char split_char) const;
-
     bool matchesSelector(std::string selector) const;
 
     void remove();

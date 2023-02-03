@@ -8,6 +8,7 @@
 #include "XML/XMLParseError.hpp"
 #include "XML/XMLAccessError.hpp"
 #include "XML/XMLModifyError.hpp"
+#include "custom_specifications.hpp"
 
 XMLElement::XMLElement(const std::string &name) : uuid(UUID()) {
     this->name = name;
@@ -522,7 +523,7 @@ std::vector<XMLElement *> XMLElement::query(const std::string &selector) const {
         return std::vector<XMLElement*>();
 
     XMLElementVector result;
-    std::vector<std::string> selectors = split(selector, '/');
+    std::vector<std::string> selectors = custom::split(selector, '/');
     std::string firstSelector = selectors[0];
     std::string restSelector;
     if (selectors.size() > 1) {
@@ -688,46 +689,6 @@ bool XMLElement::matchesSelector(std::string selector) const {
         }
     }
     return true;
-}
-
-std::vector<std::string> XMLElement::split(const std::string &str, char split_char) const {
-    // This function splits the specified string into a vector of strings, using the specified character as a separator.
-    // For example, split("foo.bar", '.') will return a vector containing "foo" and "bar".
-    // The separator character will be ignored if it is between double or single quotes.
-
-    std::vector<std::string> result;
-    std::string current;
-    bool in_quotes = false;
-    char quote_char = 0;
-    for (size_t i = 0; i < str.size(); ++i) {
-        char c = str[i];
-        if (c == '\'' || c == '"') {
-            if (in_quotes) {
-                if (c == quote_char) {
-                    in_quotes = false;
-                    current += c;
-                } else {
-                    current += c;
-                }
-            } else {
-                in_quotes = true;
-                quote_char = c;
-                current += c;
-            }
-        } else if (c == split_char) {
-            if (in_quotes) {
-                current += c;
-            } else {
-                result.push_back(current);
-                current.clear();
-            }
-        } else {
-            current += c;
-        }
-    }
-    if (!current.empty())
-        result.push_back(current);
-    return result;
 }
 
 void XMLElement::setParent(XMLElement *parent) {

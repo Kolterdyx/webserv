@@ -1,5 +1,4 @@
-#include <iostream>
-#include "XML/XMLDocument.hpp"
+#include "webserv.hpp"
 
 int main(int argc, char *argv[]) {
 	if (argc < 2) {
@@ -12,6 +11,6 @@ int main(int argc, char *argv[]) {
 
 	// TODO: Add support for multiple attributes and :not()
 	XMLElementVector result = configXML.query("/@*");
-	std::cout << result << "\n";
+//	std::cout << result << "\n";
 	return 0;
 }
