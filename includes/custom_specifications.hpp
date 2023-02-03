@@ -47,52 +47,55 @@ namespace custom {
 	 * @return An std::vector containing all of the substrings. All occurences of 'split_char' will be removed.
 	 */
 	std::vector<std::string> split(const std::string &str, char split_char) {
-    // This function splits the specified string into a vector of strings, using the specified character as a separator.
-    // For example, split("foo.bar", '.') will return a vector containing "foo" and "bar".
-    // The separator character will be ignored if it is between double or single quotes.
 
-    std::vector<std::string> result;
-    std::string current;
-    bool in_quotes = false;
-    char quote_char = 0;
-    for (size_t i = 0; i < str.size(); ++i) {
-        char c = str[i];
-        if (c == '\'' || c == '"') {
-            if (in_quotes) {
-                if (c == quote_char) {
-                    in_quotes = false;
-                }
-				current += c;
+		std::vector<std::string> result;
+		std::string current;
+		bool in_quotes = false;
+		char quote_char = 0;
+		for (size_t i = 0; i < str.size(); ++i) {
+			char c = str[i];
+			if (c == '\'' || c == '"') {
+				if (in_quotes) {
+					if (c == quote_char) {
+						in_quotes = false;
+					}
+					current += c;
+				} else {
+					in_quotes = true;
+					quote_char = c;
+					current += c;
+				}
+			} else if (c == split_char) {
+				if (in_quotes) {
+					current += c;
+				} else {
+					result.push_back(current);
+					current.clear();
+				}
 			} else {
-                in_quotes = true;
-                quote_char = c;
-                current += c;
-            }
-        } else if (c == split_char) {
-            if (in_quotes) {
-                current += c;
-            } else {
-                result.push_back(current);
-                current.clear();
-            }
-        } else {
-            current += c;
-        }
-    }
-    if (!current.empty())
-        result.push_back(current);
-    return result;
-}
+				current += c;
+			}
+		}
+		if (!current.empty())
+			result.push_back(current);
+		return result;
+	}
 
-std::string trim(std::string str, std::string chars) {
-    // This function removes all the characters in the string "chars" from the beginning and end of the string "str".
+	/**
+	 * @brief Trim the given set of characters off of both ends of a string.
+	 * @param str String to trim
+	 * @param chars Characters to trim off from both ends
+	 * @return Trimmed string
+	 */
+	std::string trim(std::string str, std::string chars) {
+		// This function removes all the characters in the string "chars" from the beginning and end of the string "str".
 
-    size_t start = str.find_first_not_of(chars);
-    if (start == std::string::npos)
-        return "";
-    size_t end = str.find_last_not_of(chars);
-    return str.substr(start, end - start + 1);
-}
+		size_t start = str.find_first_not_of(chars);
+		if (start == std::string::npos)
+			return "";
+		size_t end = str.find_last_not_of(chars);
+		return str.substr(start, end - start + 1);
+	}
 
 }
 
