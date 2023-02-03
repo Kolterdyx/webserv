@@ -41,6 +41,10 @@ public:
 	uint64_t getPart1() const;
 	uint64_t getPart2() const;
 
+	static UUID get_nil();
+
+	bool is_nil() const;
+
 	// stream operator overloads
 	friend std::ostream &operator<<(std::ostream &os, const UUID &uuid);
 

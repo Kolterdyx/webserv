@@ -19,7 +19,7 @@ UUID::UUID(const UUID &uuid) {
 }
 
 bool UUID::operator==(const UUID &uuid) const {
-	return this->part1 == uuid.part1 && this->part2 == uuid.part2;
+	return this->part1 == uuid.part1 && this->part2 == uuid.part2 && !is_nil();
 }
 
 bool UUID::operator!=(const UUID &uuid) const {
@@ -66,19 +66,30 @@ uint64_t UUID::getPart2() const {
 }
 
 bool UUID::operator<(const UUID &uuid) const {
-	return this->part1 < uuid.part1 || (this->part1 == uuid.part1 && this->part2 < uuid.part2);
+	return (this->part1 < uuid.part1 || (this->part1 == uuid.part1 && this->part2 < uuid.part2)) && !is_nil();
 }
 
 bool UUID::operator<=(const UUID &uuid) const {
-	return *this < uuid || *this == uuid;
+	return (*this < uuid || *this == uuid) && !is_nil();
 }
 
 bool UUID::operator>(const UUID &uuid) const {
-	return !(*this <= uuid);
+	return !(*this <= uuid) && !is_nil();
 }
 
 bool UUID::operator>=(const UUID &uuid) const {
-	return !(*this < uuid);
+	return !(*this < uuid) && !is_nil();
+}
+
+UUID UUID::get_nil() {
+	UUID nil_uuid;
+	nil_uuid.part1 = 0;
+	nil_uuid.part2 = 0;
+	return nil_uuid;
+}
+
+bool UUID::is_nil() const {
+	return part1 == 0 && part2 == 0;
 }
 
 
