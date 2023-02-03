@@ -47,7 +47,7 @@ private:
 
     static std::vector<std::string> splitXML(std::string xmlString);
 
-    static size_t find_first_of_unquoted(std::string haystack, std::string needles, size_t start, size_t end);
+    static size_t findFirstOfUnquoted(std::string haystack, std::string needles, size_t start, size_t end);
 
     static const std::string &replaceEscapeSequences(std::string textContent);
 

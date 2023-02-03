@@ -25,7 +25,7 @@ namespace std {
     }
 
 	/**
-	 * @brief Converts a given variable to a string using an std::stringstream
+	 * @brief Converts a given variable to a string using an std::stringstream. Added here because we can't have C++11
 	 * @tparam T
 	 * @param var variable to convert. If it's a class instance, it must have a << operator overload.
 	 * @return
