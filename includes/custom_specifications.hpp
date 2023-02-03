@@ -84,6 +84,16 @@ namespace custom {
     return result;
 }
 
+std::string trim(std::string str, std::string chars) {
+    // This function removes all the characters in the string "chars" from the beginning and end of the string "str".
+
+    size_t start = str.find_first_not_of(chars);
+    if (start == std::string::npos)
+        return "";
+    size_t end = str.find_last_not_of(chars);
+    return str.substr(start, end - start + 1);
+}
+
 }
 
 #endif //CUSTOM_SPECIFICATIONS_HPP

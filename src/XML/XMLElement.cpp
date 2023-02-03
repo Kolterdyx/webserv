@@ -119,11 +119,11 @@ XMLElement *XMLElement::fromString(const std::string &xml) {
         throw XMLParseError("Empty string.");
     if (xml[0] != '<')
         throw XMLParseError("String does not start with '<'.");
-    if (trim(xml, " \n")[trim(xml, " \n").length() - 1] != '>')
+    if (custom::trim(xml, " \n")[custom::trim(xml, " \n").length() - 1] != '>')
         throw XMLParseError("String does not end with '>'.");
     if (xml.find("<!--") == 0)
     {
-        element->setContent(trim(xml.substr(4, xml.length() - 7), " \t"), true);
+        element->setContent(custom::trim(xml.substr(4, xml.length() - 7), " \t"), true);
         element->_isComment = true;
         element->name = "__comment__";
         return element;
@@ -245,7 +245,7 @@ std::vector<std::string> XMLElement::splitXML(std::string xmlString) {
     size_t startOpen = 0;
     size_t end = 0;
     size_t selfClosing = 0;
-    if (!trim(xmlString.substr(0, start), " \t\n").empty() && start != std::string::npos)
+    if (!custom::trim(xmlString.substr(0, start), " \t\n").empty() && start != std::string::npos)
         throw XMLParseError("Invalid text content.");
     while (start != std::string::npos) {
         if (xmlString.substr(start + 1, 3) == "!--" && (start == 0 || xmlString[start - 1] != '!')) {
@@ -343,16 +343,6 @@ const std::string &XMLElement::replaceEscapeSequences(std::string textContent) {
         ampersand = parsedTextContent.find('&', ampersand + 1);
     }
     return parsedTextContent;
-}
-
-std::string XMLElement::trim(std::string str, std::string chars) {
-    // This function removes all the characters in the string "chars" from the beginning and end of the string "str".
-
-    size_t start = str.find_first_not_of(chars);
-    if (start == std::string::npos)
-        return "";
-    size_t end = str.find_last_not_of(chars);
-    return str.substr(start, end - start + 1);
 }
 
 XMLElement *XMLElement::createChild(const std::string &name) {

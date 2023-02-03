@@ -51,8 +51,6 @@ private:
 
     static const std::string &replaceEscapeSequences(std::string textContent);
 
-    static std::string trim(std::string str, std::string chars);
-
     std::string toPrettyString(int indent, int level) const;
 
     void setParent(XMLElement* parent);
