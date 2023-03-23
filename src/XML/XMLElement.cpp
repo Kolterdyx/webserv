@@ -740,13 +740,12 @@ XMLElement &XMLElement::operator=(const XMLElement &copy) {
 
 	if (this == &copy)
 		return *this;
-	name = copy.name;
-	attributes = copy.attributes;
-	children = copy.children;
-	parent = copy.parent;
-	visible = copy.visible;
-	_hasContent = copy._hasContent;
-	_isComment = copy._isComment;
+
+	// Deep copy can be done by serializing the element and then parsing it again.
+	// This is not the most efficient way to do it, but it is the easiest.
+	std::string serialized = copy.toString();
+	this->fromString(serialized);
+
 
 	return *this;
 }

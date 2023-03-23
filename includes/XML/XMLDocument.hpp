@@ -25,6 +25,11 @@ private:
 
 public:
 
+	/**
+	 * @brief Create empty XMLDocument object.
+	 */
+	XMLDocument();
+
     /**
      * @brief Get the root element of the XMLDocument file.
      * @return The root element of the XMLDocument file.
@@ -42,7 +47,7 @@ public:
      * @details This constructor creates an empty XMLDocument object.
      * @param rootName The name of the root element.
      */
-    explicit XMLDocument(const std::string &rootName = "root");
+    explicit XMLDocument(const std::string &rootName);
 
 	/**
 	 * @brief Copy constructor.

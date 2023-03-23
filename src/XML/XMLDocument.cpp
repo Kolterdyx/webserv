@@ -117,8 +117,12 @@ XMLDocument::XMLDocument(const XMLDocument &copy) : root() {
 
 XMLDocument &XMLDocument::operator=(const XMLDocument &copy) {
 	if (this != &copy) {
-		delete root;
-		root = new XMLElement(*copy.root);
+		std::string xml = copy.toString();
+		fromString(xml);
 	}
 	return *this;
+}
+
+XMLDocument::XMLDocument() {
+	root = new XMLElement("root");
 }
