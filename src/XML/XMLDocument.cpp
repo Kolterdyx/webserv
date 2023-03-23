@@ -110,3 +110,15 @@ XMLElementVector XMLDocument::query(const std::string &query) const {
     delete tmpRoot;
     return result;
 }
+
+XMLDocument::XMLDocument(const XMLDocument &copy) : root() {
+	*this = copy;
+}
+
+XMLDocument &XMLDocument::operator=(const XMLDocument &copy) {
+	if (this != &copy) {
+		delete root;
+		root = new XMLElement(*copy.root);
+	}
+	return *this;
+}

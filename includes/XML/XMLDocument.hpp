@@ -44,6 +44,17 @@ public:
      */
     explicit XMLDocument(const std::string &rootName = "root");
 
+	/**
+	 * @brief Copy constructor.
+	 * @param copy The XMLDocument object to copy.
+	 */
+	XMLDocument(const XMLDocument &copy);
+
+	/**
+	 * @brief Copy assignment operator.
+	 */
+	XMLDocument &operator=(const XMLDocument &copy);
+
     /**
      * @brief Destructor.
      */

@@ -96,6 +96,18 @@ public:
      */
     XMLElement(const std::string& name, const XMLAttributeMap& attributes);
 
+	/**
+	 * @brief Copy constructor.
+	 * @param copy The XMLElement object to copy.
+	 */
+	XMLElement(const XMLElement &copy);
+
+	/**
+	 * @brief Copy assignment operator.
+	 * @param copy The XMLElement object to copy.
+	 */
+	XMLElement &operator=(const XMLElement &copy);
+
     /**
      * @brief Destructor.
      */

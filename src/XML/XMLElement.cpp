@@ -732,3 +732,22 @@ XMLElement *XMLElement::getParent() {
 	return parent;
 }
 
+XMLElement::XMLElement(const XMLElement &copy) : _hasContent(), _isComment(), parent(), visible() {
+	*this = copy;
+}
+
+XMLElement &XMLElement::operator=(const XMLElement &copy) {
+
+	if (this == &copy)
+		return *this;
+	name = copy.name;
+	attributes = copy.attributes;
+	children = copy.children;
+	parent = copy.parent;
+	visible = copy.visible;
+	_hasContent = copy._hasContent;
+	_isComment = copy._isComment;
+
+	return *this;
+}
+
