@@ -4,17 +4,16 @@
 #include "XML/XMLParseError.hpp"
 
 const XMLElement * XMLDocument::getRoot() const {
-    return root->getChildren()[0];
+    return root;
 }
 
 void XMLDocument::setRoot(XMLElement *elem) {
-	this->root->clearChildren();
-    this->root->addChild(elem);
+	delete root;
+    root = new XMLElement(*elem);
 }
 
 XMLDocument::XMLDocument(const std::string &rootName) {
-	root = new XMLElement("__root__");
-    setRoot(new XMLElement(rootName));
+	root = new XMLElement(rootName);
 }
 
 
@@ -28,11 +27,11 @@ std::ostream &operator<<(std::ostream &os, const XMLDocument &xml) {
 }
 
 void XMLDocument::fromString(const std::string &xml) {
-    setRoot(XMLElement::fromString(xml));
+    root = XMLElement::fromString(xml);
 }
 
 std::string XMLDocument::toPrettyString(int indent) const {
-    return root->getChildren()[0]->toPrettyString(indent);
+    return root->toPrettyString(indent);
 }
 
 XMLDocument::~XMLDocument() {
@@ -53,11 +52,11 @@ void XMLDocument::fromFile(const std::string &filename) {
 XMLElementVector XMLDocument::query(const std::string &query) const {
     XMLElementVector result;
 
-    std::vector<std::string> queries = custom::split(query, ';');
+    std::vector<std::string> queries = split(query, ';');
 	std::string q;
 
     for (size_t i = 0; i < queries.size(); i++) {
-		q = custom::trim(queries[i], " ");
+		q = trim(queries[i], " ");
 		if (q[0] != '/') {
 			throw XMLParseError("Query at position " + std::to_string(i) + " does not start with a slash. (/)");
 		}
@@ -69,7 +68,8 @@ XMLElementVector XMLDocument::query(const std::string &query) const {
 }
 
 XMLDocument::XMLDocument(const XMLDocument &copy) : root() {
-	*this = copy;
+	std::string xml = copy.toString();
+	fromString(xml);
 }
 
 XMLDocument &XMLDocument::operator=(const XMLDocument &copy) {
@@ -82,4 +82,8 @@ XMLDocument &XMLDocument::operator=(const XMLDocument &copy) {
 
 XMLDocument::XMLDocument() {
 	root = new XMLElement("root");
+}
+
+std::string XMLDocument::toRawString() const {
+	return root->toRawString();
 }

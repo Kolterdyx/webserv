@@ -11,6 +11,7 @@
 #include <iostream>
 #include <stdexcept>
 #include "UUID/UUID.hpp"
+#include "macros.hpp"
 
 class XMLElement;
 
@@ -253,6 +254,8 @@ public:
 	XMLElement * getParent();
 
 	UUID getUUID();
+
+	std::string toRawString() const;
 };
 
 

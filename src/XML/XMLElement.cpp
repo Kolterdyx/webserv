@@ -8,7 +8,7 @@
 #include "XML/XMLParseError.hpp"
 #include "XML/XMLAccessError.hpp"
 #include "XML/XMLModifyError.hpp"
-#include "custom_specifications.hpp"
+#include "utils.hpp"
 
 XMLElement::XMLElement(const std::string &name) : uuid(UUID()) {
     this->name = name;
@@ -119,11 +119,11 @@ XMLElement *XMLElement::fromString(const std::string &xml) {
         throw XMLParseError("Empty string.");
     if (xml[0] != '<')
         throw XMLParseError("String does not start with '<'.");
-    if (custom::trim(xml, " \n")[custom::trim(xml, " \n").length() - 1] != '>')
+    if (trim(xml, " \n")[trim(xml, " \n").length() - 1] != '>')
         throw XMLParseError("String does not end with '>'.");
     if (xml.find("<!--") == 0)
     {
-        element->setContent(custom::trim(xml.substr(4, xml.length() - 7), " \t"), true);
+        element->setContent(trim(xml.substr(4, xml.length() - 7), " \t"), true);
         element->_isComment = true;
         element->name = "__comment__";
         return element;
@@ -245,7 +245,7 @@ std::vector<std::string> XMLElement::splitXML(std::string xmlString) {
     size_t startOpen = 0;
     size_t end = 0;
     size_t selfClosing = 0;
-    if (!custom::trim(xmlString.substr(0, start), " \t\n").empty() && start != std::string::npos)
+    if (!trim(xmlString.substr(0, start), " \t\n").empty() && start != std::string::npos)
         throw XMLParseError("Invalid text content.");
     while (start != std::string::npos) {
         if (xmlString.substr(start + 1, 3) == "!--" && (start == 0 || xmlString[start - 1] != '!')) {
@@ -430,8 +430,9 @@ std::string XMLElement::toPrettyString(int indent) const {
 }
 
 std::string XMLElement::toPrettyString(int indent, int level) const {
-    if (!visible)
-        return "<deleted element/>";
+    if (!visible) {
+		return "<__invisible__/>";
+	}
     // This function returns a string representation of the element, with proper indentation and newlines. C++98
 
     std::string str;
@@ -513,7 +514,7 @@ std::vector<XMLElement *> XMLElement::query(const std::string &selector) const {
         return std::vector<XMLElement*>();
 
     XMLElementVector result;
-    std::vector<std::string> selectors = custom::split(selector, '/');
+    std::vector<std::string> selectors = split(selector, '/');
     std::string firstSelector = selectors[0];
     std::string restSelector;
     if (selectors.size() > 1) {
@@ -570,7 +571,7 @@ std::vector<XMLElement *> XMLElement::query(const std::string &selector) const {
 
 bool XMLElement::matchesSelector(std::string selector) const {
     // Check if this element matches the specified selector.
-    // The selector is in CSS selector format.
+    // The selector is in CSS selector applyFormat.
     // Examples:
     // - element
     // - element:not(selector)
@@ -719,5 +720,9 @@ XMLElement &XMLElement::operator=(const XMLElement &copy) {
 
 
 	return *this;
+}
+
+std::string XMLElement::toRawString() const {
+	return toString();
 }
 

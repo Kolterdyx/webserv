@@ -10,7 +10,8 @@
 #include <fstream>
 #include <string>
 #include <iostream>
-#include "custom_specifications.hpp"
+#include "utils.hpp"
+#include "macros.hpp"
 
 
 /**
@@ -74,9 +75,14 @@ public:
     void fromString(const std::string& xml);
 
     /**
-     * @brief Generate XMLDocument string.
+     * @brief Generate XMLDocument string with default indentation.
      */
     std::string toString() const;
+
+	/**
+	 * @brief Generate XMLDocument raw string.
+	 */
+	std::string toRawString() const;
 
     /**
      * @brief << operator overload.
