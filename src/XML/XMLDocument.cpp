@@ -1,25 +1,25 @@
 
-#include <sstream>
-#include <fstream>
 #include "XML/XMLDocument.hpp"
 #include "XML/XMLAccessError.hpp"
+#include "XML/XMLParseError.hpp"
 
 const XMLElement * XMLDocument::getRoot() const {
-    return root;
+    return root->getChildren()[0];
 }
 
-void XMLDocument::setRoot(XMLElement *root) {
-    delete XMLDocument::root;
-    XMLDocument::root = root;
+void XMLDocument::setRoot(XMLElement *elem) {
+	this->root->clearChildren();
+    this->root->addChild(elem);
 }
 
 XMLDocument::XMLDocument(const std::string &rootName) {
-    root = new XMLElement(rootName);
+	root = new XMLElement("__root__");
+    setRoot(new XMLElement(rootName));
 }
 
 
 std::string XMLDocument::toString() const {
-    return root->toPrettyString(4);
+    return toPrettyString(4);
 }
 
 std::ostream &operator<<(std::ostream &os, const XMLDocument &xml) {
@@ -28,57 +28,15 @@ std::ostream &operator<<(std::ostream &os, const XMLDocument &xml) {
 }
 
 void XMLDocument::fromString(const std::string &xml) {
-    XMLElement *root;
-    root = XMLElement::fromString(xml);
-    setRoot(root);
+    setRoot(XMLElement::fromString(xml));
 }
 
 std::string XMLDocument::toPrettyString(int indent) const {
-    return root->toPrettyString(indent);
+    return root->getChildren()[0]->toPrettyString(indent);
 }
 
 XMLDocument::~XMLDocument() {
     delete root;
-}
-
-std::vector<std::string> XMLDocument::split(const std::string &str, char split_char) {
-    // This function splits the specified string into a vector of strings, using the specified character as a separator.
-    // For example, split("foo.bar", '.') will return a vector containing "foo" and "bar".
-    // The separator character will be ignored if it is between double or single quotes.
-
-    std::vector<std::string> result;
-    std::string current;
-    bool in_quotes = false;
-    char quote_char = 0;
-    for (size_t i = 0; i < str.size(); ++i) {
-        char c = str[i];
-        if (c == '\'' || c == '"') {
-            if (in_quotes) {
-                if (c == quote_char) {
-                    in_quotes = false;
-                    current += c;
-                } else {
-                    current += c;
-                }
-            } else {
-                in_quotes = true;
-                quote_char = c;
-                current += c;
-            }
-        } else if (c == split_char) {
-            if (in_quotes) {
-                current += c;
-            } else {
-                result.push_back(current);
-                current.clear();
-            }
-        } else {
-            current += c;
-        }
-    }
-    if (!current.empty())
-        result.push_back(current);
-    return result;
 }
 
 void XMLDocument::fromFile(const std::string &filename) {
@@ -95,19 +53,18 @@ void XMLDocument::fromFile(const std::string &filename) {
 XMLElementVector XMLDocument::query(const std::string &query) const {
     XMLElementVector result;
 
-    std::vector<std::string> queries = split(query, ';');
+    std::vector<std::string> queries = custom::split(query, ';');
+	std::string q;
 
-    // queries is a vector of CSS selectors
-    // Parse each selector and add the elements that match to the result vector
-    XMLElement *tmpRoot = new XMLElement("tmpRoot");
-    tmpRoot->addChild(root);
     for (size_t i = 0; i < queries.size(); i++) {
-        std::string selector = queries[i].substr(1, queries[i].size() - 1);
-        XMLElementVector elements = tmpRoot->query(selector);
+		q = custom::trim(queries[i], " ");
+		if (q[0] != '/') {
+			throw XMLParseError("Query at position " + std::to_string(i) + " does not start with a slash. (/)");
+		}
+        std::string selector = q.substr(1, q.size() - 1);
+        XMLElementVector elements = root->query(selector);
         result.insert(result.end(), elements.begin(), elements.end());
     }
-    tmpRoot->removeChild(root);
-    delete tmpRoot;
     return result;
 }
 

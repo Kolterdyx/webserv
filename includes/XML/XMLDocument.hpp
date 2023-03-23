@@ -6,6 +6,11 @@
 #define XMLPARSER_XML_HPP
 
 #include "XMLElement.hpp"
+#include <sstream>
+#include <fstream>
+#include <string>
+#include <iostream>
+#include "custom_specifications.hpp"
 
 
 /**
@@ -20,8 +25,6 @@ private:
      * @brief The root element of the XMLDocument file.
      */
     XMLElement *root;
-
-    static std::vector<std::string> split(const std::string &str, char split_char);
 
 public:
 

@@ -10,28 +10,12 @@
 #include <vector>
 #include <iostream>
 #include <stdexcept>
+#include "UUID/UUID.hpp"
 
+class XMLElement;
 
-namespace std {
-    template<typename T>
-    std::ostream &operator<<(std::ostream &os, const std::vector<T> vector) {
-        for (size_t i = 0; i < vector.size(); i++) {
-            os << i << ": " << vector[i] << "\n";
-        }
-        return os;
-    }
-
-    template<typename K, typename V>
-    std::ostream &operator<<(std::ostream &os, const std::map<K, V> map) {
-        for (typename std::map<K, V>::const_iterator it = map.begin(); it != map.end(); it++) {
-            os << it->first << " : " << it->second << "\n";
-        }
-        return os;
-    }
-}
-
-#define XMLElementVector std::vector<XMLElement*>
-#define XMLAttributeMap std::map<std::string, std::string>
+typedef std::vector<XMLElement*> XMLElementVector;
+typedef std::map<std::string, std::string> XMLAttributeMap;
 
 /**
  * @brief XMLElement class.
@@ -59,13 +43,13 @@ private:
 
     XMLElement* parent;
 
+	const UUID uuid;
+
     static std::vector<std::string> splitXML(std::string xmlString);
 
-    static size_t find_first_of_unquoted(std::string haystack, std::string needles, size_t start, size_t end);
+    static size_t findFirstOfUnquoted(std::string haystack, std::string needles, size_t start, size_t end);
 
     static const std::string &replaceEscapeSequences(std::string textContent);
-
-    static std::string trim(std::string str, std::string chars);
 
     std::string toPrettyString(int indent, int level) const;
 
@@ -112,6 +96,11 @@ public:
      * @brief Destructor.
      */
     ~XMLElement();
+
+	/*
+	 * @brief Comparison operator.
+	 */
+	bool operator==(const XMLElement& element) const;
 
     /**
      * @brief Get the name of the element.
@@ -257,13 +246,13 @@ public:
      */
     bool isComment() const;
 
-    std::vector<std::string> split(const std::string &str, char split_char) const;
-
     bool matchesSelector(std::string selector) const;
 
     void remove();
 
 	XMLElement * getParent();
+
+	UUID getUUID();
 };
 
 

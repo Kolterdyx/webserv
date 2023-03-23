@@ -3,12 +3,14 @@
 //
 
 #include <sstream>
+#include <algorithm>
 #include "XML/XMLElement.hpp"
 #include "XML/XMLParseError.hpp"
 #include "XML/XMLAccessError.hpp"
 #include "XML/XMLModifyError.hpp"
+#include "custom_specifications.hpp"
 
-XMLElement::XMLElement(const std::string &name) {
+XMLElement::XMLElement(const std::string &name) : uuid(UUID()) {
     this->name = name;
     _hasContent = false;
     _isComment = false;
@@ -16,7 +18,7 @@ XMLElement::XMLElement(const std::string &name) {
     this->visible = true;
 }
 
-XMLElement::XMLElement() {
+XMLElement::XMLElement() : uuid(UUID()) {
     this->name = "element";
     _hasContent = false;
     _isComment = false;
@@ -24,7 +26,7 @@ XMLElement::XMLElement() {
     this->visible = true;
 }
 
-XMLElement::XMLElement(const std::string& name, const std::map<std::string, std::string>& attributes) {
+XMLElement::XMLElement(const std::string& name, const std::map<std::string, std::string>& attributes) : uuid(UUID()) {
     this->name = name;
     this->attributes = attributes;
     _hasContent = false;
@@ -117,11 +119,11 @@ XMLElement *XMLElement::fromString(const std::string &xml) {
         throw XMLParseError("Empty string.");
     if (xml[0] != '<')
         throw XMLParseError("String does not start with '<'.");
-    if (trim(xml, " \n")[trim(xml, " \n").length() - 1] != '>')
+    if (custom::trim(xml, " \n")[custom::trim(xml, " \n").length() - 1] != '>')
         throw XMLParseError("String does not end with '>'.");
     if (xml.find("<!--") == 0)
     {
-        element->setContent(trim(xml.substr(4, xml.length() - 7), " \t"), true);
+        element->setContent(custom::trim(xml.substr(4, xml.length() - 7), " \t"), true);
         element->_isComment = true;
         element->name = "__comment__";
         return element;
@@ -141,8 +143,8 @@ XMLElement *XMLElement::fromString(const std::string &xml) {
     element->setName(name);
 
     // Now we determine if this is a self-closing tag.
-    size_t tagEnd = find_first_of_unquoted(xml, ">", 0, xml.length());
-    size_t selfClosingChar = find_first_of_unquoted(xml, "/", 0, tagEnd);
+    size_t tagEnd = findFirstOfUnquoted(xml, ">", 0, xml.length());
+    size_t selfClosingChar = findFirstOfUnquoted(xml, "/", 0, tagEnd);
     bool selfClosing = false;
     if (selfClosingChar != std::string::npos && selfClosingChar + 1 == tagEnd) {
         // This is a self-closing tag.
@@ -160,10 +162,10 @@ XMLElement *XMLElement::fromString(const std::string &xml) {
     // And so on.
     // Since we don't know how many attributes there are, we need to loop until we find the end of the tag.
 
-    size_t attributeStart = find_first_of_unquoted(xml, " ", 0, std::string::npos);
+    size_t attributeStart = findFirstOfUnquoted(xml, " ", 0, std::string::npos);
     if (attributeStart != std::string::npos && attributeStart < tagEnd) {
         // There are attributes.
-        size_t attributeEnd = find_first_of_unquoted(xml, " />", attributeStart + 1, std::string::npos);
+        size_t attributeEnd = findFirstOfUnquoted(xml, " />", attributeStart + 1, std::string::npos);
         while (attributeEnd != std::string::npos && attributeEnd <= tagEnd) {
             // We have found an attribute.
             std::string attribute = xml.substr(attributeStart + 1, attributeEnd - attributeStart - 1);
@@ -180,7 +182,7 @@ XMLElement *XMLElement::fromString(const std::string &xml) {
             std::string attributeValue = attribute.substr(equals + 2, attribute.length() - equals - 3);
             element->setAttribute(attributeName, replaceEscapeSequences(attributeValue));
             attributeStart = attributeEnd;
-            attributeEnd = find_first_of_unquoted(xml, " />", attributeStart + 1, std::string::npos);
+            attributeEnd = findFirstOfUnquoted(xml, " />", attributeStart + 1, std::string::npos);
         }
     }
 
@@ -239,11 +241,11 @@ std::vector<std::string> XMLElement::splitXML(std::string xmlString) {
 
     std::vector<std::string> xmlElements;
     size_t depth = 0;
-    size_t start = find_first_of_unquoted(xmlString, "<", 0, std::string::npos);
+    size_t start = findFirstOfUnquoted(xmlString, "<", 0, std::string::npos);
     size_t startOpen = 0;
     size_t end = 0;
     size_t selfClosing = 0;
-    if (!trim(xmlString.substr(0, start), " \t\n").empty() && start != std::string::npos)
+    if (!custom::trim(xmlString.substr(0, start), " \t\n").empty() && start != std::string::npos)
         throw XMLParseError("Invalid text content.");
     while (start != std::string::npos) {
         if (xmlString.substr(start + 1, 3) == "!--" && (start == 0 || xmlString[start - 1] != '!')) {
@@ -255,19 +257,19 @@ std::vector<std::string> XMLElement::splitXML(std::string xmlString) {
             if (depth == 0)
                 xmlElements.push_back(comment);
             ++end;
-            start = find_first_of_unquoted(xmlString, "<", end, std::string::npos);
+            start = findFirstOfUnquoted(xmlString, "<", end, std::string::npos);
             continue;
         }
-        end = find_first_of_unquoted(xmlString, ">", start, std::string::npos);
+        end = findFirstOfUnquoted(xmlString, ">", start, std::string::npos);
         if (end == std::string::npos)
             throw XMLParseError("Invalid tag.");
-        selfClosing = find_first_of_unquoted(xmlString, "/>", start, end);
+        selfClosing = findFirstOfUnquoted(xmlString, "/>", start, end);
         if (selfClosing != std::string::npos && selfClosing + 1 == end) {
             // This is a self-closing tag.
             if (depth == 0)
                 xmlElements.push_back(xmlString.substr(start, end - start + 1));
             ++end;
-            start = find_first_of_unquoted(xmlString, "<", end, std::string::npos);
+            start = findFirstOfUnquoted(xmlString, "<", end, std::string::npos);
             continue;
         }
         if (xmlString[start + 1] == '/') {
@@ -284,7 +286,7 @@ std::vector<std::string> XMLElement::splitXML(std::string xmlString) {
                 startOpen = start;
             ++depth;
         }
-        start = find_first_of_unquoted(xmlString, "<", end, std::string::npos);
+        start = findFirstOfUnquoted(xmlString, "<", end, std::string::npos);
     }
     if (depth != 0)
         throw XMLParseError("Invalid tag.");
@@ -293,7 +295,7 @@ std::vector<std::string> XMLElement::splitXML(std::string xmlString) {
     return xmlElements;
 }
 
-size_t XMLElement::find_first_of_unquoted(std::string haystack, std::string needles, size_t start, size_t end) {
+size_t XMLElement::findFirstOfUnquoted(std::string haystack, std::string needles, size_t start, size_t end) {
     // This function is like std::string::find_first_of(), but it ignores characters that are inside quotes.
     // For example, if you have the string "a\"b\"c", this function will return 3 when you search for the first quote.
     // This function is used by splitXML() to find the end of a self-closing tag.
@@ -341,16 +343,6 @@ const std::string &XMLElement::replaceEscapeSequences(std::string textContent) {
         ampersand = parsedTextContent.find('&', ampersand + 1);
     }
     return parsedTextContent;
-}
-
-std::string XMLElement::trim(std::string str, std::string chars) {
-    // This function removes all the characters in the string "chars" from the beginning and end of the string "str".
-
-    size_t start = str.find_first_not_of(chars);
-    if (start == std::string::npos)
-        return "";
-    size_t end = str.find_last_not_of(chars);
-    return str.substr(start, end - start + 1);
 }
 
 XMLElement *XMLElement::createChild(const std::string &name) {
@@ -521,7 +513,7 @@ std::vector<XMLElement *> XMLElement::query(const std::string &selector) const {
         return std::vector<XMLElement*>();
 
     XMLElementVector result;
-    std::vector<std::string> selectors = split(selector, '/');
+    std::vector<std::string> selectors = custom::split(selector, '/');
     std::string firstSelector = selectors[0];
     std::string restSelector;
     if (selectors.size() > 1) {
@@ -551,7 +543,7 @@ std::vector<XMLElement *> XMLElement::query(const std::string &selector) const {
         }
 		if (firstSelector.substr(0, 1) == "@") {
             XMLElementVector subResult;
-			result.push_back(const_cast<XMLElement*>(this));
+//			result.push_back(const_cast<XMLElement*>(this));
             if (restSelector.empty()) {
                 result.push_back(child);
                 subResult = child->query(firstSelector);
@@ -561,8 +553,19 @@ std::vector<XMLElement *> XMLElement::query(const std::string &selector) const {
             result.insert(result.end(), subResult.begin(), subResult.end());
         }
     }
-	(void)std::unique(result.begin(), result.end());
-    return result;
+	// Remove duplicates
+	XMLElementVector uniqueResult;
+	for (XMLElementVector::const_iterator it = result.begin(); it != result.end(); ++it) {
+		bool found = false;
+		for (XMLElementVector::const_iterator it2 = uniqueResult.begin(); it2 != uniqueResult.end(); ++it2) {
+			found = (**it) == (**it2);
+			if (found)
+				break;
+		}
+		if (!found)
+			uniqueResult.push_back(*it);
+	}
+    return uniqueResult;
 }
 
 bool XMLElement::matchesSelector(std::string selector) const {
@@ -678,46 +681,6 @@ bool XMLElement::matchesSelector(std::string selector) const {
     return true;
 }
 
-std::vector<std::string> XMLElement::split(const std::string &str, char split_char) const {
-    // This function splits the specified string into a vector of strings, using the specified character as a separator.
-    // For example, split("foo.bar", '.') will return a vector containing "foo" and "bar".
-    // The separator character will be ignored if it is between double or single quotes.
-
-    std::vector<std::string> result;
-    std::string current;
-    bool in_quotes = false;
-    char quote_char = 0;
-    for (size_t i = 0; i < str.size(); ++i) {
-        char c = str[i];
-        if (c == '\'' || c == '"') {
-            if (in_quotes) {
-                if (c == quote_char) {
-                    in_quotes = false;
-                    current += c;
-                } else {
-                    current += c;
-                }
-            } else {
-                in_quotes = true;
-                quote_char = c;
-                current += c;
-            }
-        } else if (c == split_char) {
-            if (in_quotes) {
-                current += c;
-            } else {
-                result.push_back(current);
-                current.clear();
-            }
-        } else {
-            current += c;
-        }
-    }
-    if (!current.empty())
-        result.push_back(current);
-    return result;
-}
-
 void XMLElement::setParent(XMLElement *parent) {
     this->parent = parent;
 }
@@ -730,6 +693,14 @@ void XMLElement::remove() {
 
 XMLElement *XMLElement::getParent() {
 	return parent;
+}
+
+UUID XMLElement::getUUID() {
+	return uuid;
+}
+
+bool XMLElement::operator==(const XMLElement &element) const {
+	return uuid == element.uuid;
 }
 
 XMLElement::XMLElement(const XMLElement &copy) : _hasContent(), _isComment(), parent(), visible() {
