@@ -83,30 +83,41 @@ int Request::getBodySize() {
 	return std::stoi(getHeader("Content-Length"));
 }
 
-std::string Request::toString() {
-	std::stringstream ss;
-	ss << *this;
-	return ss.str();
+std::string Request::toString() const {
+	std::string s;
+
+	// HTTP format
+
+	s += method + " " + path + " HTTP/" + version + "\n";
+	for (std::map<std::string, std::string>::const_iterator it = headers.begin(); it != headers.end(); ++it) {
+		s += it->first + ": " + it->second + "\n";
+	}
+	s += "\n";
+	s += body;
+
+	return s;
 }
 
 std::ostream &operator<<(std::ostream &os, const Request &request) {
-	os << request.method << " / HTTP/1.1\n";
-	for (std::map<std::string, std::string>::const_iterator it = request.headers.begin();
-		 it != request.headers.end(); ++it) {
-		os << it->first << ": " << it->second << "\n";
+	std::string s = request.toString();
+	// replace all \r\n with \n
+	for (std::string::iterator it = s.begin(); it != s.end(); ++it) {
+		if (*it == '\r') {
+			*it = ' ';
+		}
 	}
-	os << "\n";
-
-	if (request.body.size() > 0) {
-		os << request.body;
-	}
+	os << s;
 	return os;
 }
 
 void Request::parse_http_request(std::string request) {
 	std::string header = request.substr(0, request.find("\r\n\r\n"));
-	std::string body = request.substr(request.find("\r\n\r\n") + 4);
-	setBody(body);
+	if (request.find("\r\n\r\n") + 4 >= request.size()) {
+		setBody("");
+	} else {
+		std::string body = request.substr(request.find("\r\n\r\n") + 4);
+		setBody(body);
+	}
 	parse_header(header);
 }
 

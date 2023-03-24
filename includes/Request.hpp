@@ -47,7 +47,7 @@ public:
 
 	int getBodySize();
 
-	std::string toString();
+	std::string toString() const;
 
 	void parse_http_request(std::string request);
 

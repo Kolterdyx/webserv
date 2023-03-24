@@ -14,7 +14,7 @@ Server::~Server() {
 }
 
 
-Server::Server(const std::vector<std::pair<std::string, int> >& listen,
+Server::Server(const std::vector<std::pair<std::string, int> > &listen,
 			   const std::string &name) {
 	this->listenPairs = listen;
 	this->name = name;
@@ -35,20 +35,19 @@ void Server::init() {
 	// This must not block, so we need to use a non-blocking socket.
 	// We can use run() to wait for incoming connections.
 
-	for (int i=0; i < (int)listenPairs.size() && i < 1024; i++) {
+	for (int i = 0; i < (int) listenPairs.size() && i < 1024; i++) {
 		std::string ip = listenPairs[i].first;
 		int port = listenPairs[i].second;
 		int opt = 1;
 
 		// Creating socket file descriptor
-		if ((sockets[i] = socket(AF_INET, SOCK_STREAM, 0)) == 0)
-		{
+		if ((sockets[i] = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
 			logger.error("Failed to create socket");
 			return;
 		}
 
-		if (setsockopt(sockets[i], SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)))
-		{
+		if (setsockopt(sockets[i], SOL_SOCKET, SO_REUSEADDR, &opt,
+					   sizeof(opt))) {
 			logger.error("Failed to set socket options");
 			return;
 		}
@@ -57,19 +56,24 @@ void Server::init() {
 		addresses[i].sin_addr.s_addr = inet_addr(ip.c_str());
 		addresses[i].sin_port = htons(port);
 
-		if (bind(sockets[i], (struct sockaddr *)&addresses[i],
-				 sizeof(addresses[i]))<0)
-		{
+		if (bind(sockets[i], (struct sockaddr *) &addresses[i],
+				 sizeof(addresses[i])) < 0) {
 			logger.error("Failed to bind socket");
 			return;
 		}
 
-		if (listen(sockets[i], 3) < 0)
-		{
+		if (listen(sockets[i], 3) < 0) {
 			logger.error("Failed to listen on socket");
 			return;
 		}
-		logger.info("Listening on " + listenPairs[i].first + ":" + std::to_string(listenPairs[i].second));
+		logger.info("Listening on " + listenPairs[i].first + ":" +
+					std::to_string(listenPairs[i].second));
+
+		int flags = fcntl(sockets[i], F_SETFL, O_NONBLOCK);
+		if (flags < 0) {
+			logger.error("Failed to set socket to non-blocking");
+			return;
+		}
 	}
 	FD_ZERO(&rfds);
 	FD_ZERO(&wfds);
@@ -79,120 +83,165 @@ void Server::init() {
 
 int Server::run() {
 	this->logger.setLevel(0);
-	for (int n=0; n < (int)listenPairs.size() && n < 1024; n++) {
-//		logger.log("Listening on " + listenPairs[i].first + ":" + std::to_string(listenPairs[i].second), 1);
-
-		struct timeval tv;
-		tv.tv_usec = 10000;
-		tv.tv_sec = 0;
-		int largest_fd = 0;
-		for (int i = 0; i < (int)listenPairs.size(); i++) {
-			if (this->sockets[i] > largest_fd) {
-				largest_fd = this->sockets[i];
-			}
-		}
+	for (int n = 0; n < (int) listenPairs.size() && n < 1024; n++) {
 		FD_SET(sockets[n], &rfds);
-		FD_SET(sockets[n], &wfds);
 		FD_SET(sockets[n], &efds);
-		int select_result = select(sockets[n] + 1, &wfds, &rfds, &efds, &tv);
-
-		if (FD_ISSET(sockets[n], &efds)) {
-			logger.error("Error on socket");
-			continue;
-		}
-		if (select_result < 0) {
-			logger.error("Failed to run");
-			continue;
-		} else if (select_result == 0) {
-			logger.log("Poll timed out", -1);
-			continue;
-		}
-
-		std::string bufferstr;
-
-		if (FD_ISSET(sockets[n], &rfds)) {
-			ssize_t read_result;
-			do {
-				read_result = recv(sockets[n], this->buffer, 1024, 0);
-				bufferstr += std::string(this->buffer);
-				std::memset(this->buffer, 0, 1024);
-				logger.debug("Read " + std::to_string(read_result) + " bytes from socket");
-			} while (read_result > 0);
-			if (read_result < 0) {
-				logger.error("Failed to read from socket");
-				continue;
-			}
-		} else {
-			logger.log("No data to read", -1);
-		}
-
-
-		int client_socket = accept(sockets[n], (struct sockaddr *)&addresses[n], (socklen_t*)&addresses[n]);
-
-		logger.debug("Request: " + bufferstr);
-		Response response;
-
-		if (bufferstr.empty()) {
-			response = Response(400);
-		} else if (bufferstr.find('\r') == std::string::npos) {
-			response = Response(400);
-		} else {
-			Request request(this->buffer);
-			logger.log(request.getMethod() + " request on '" + request.getPath() + "'", 1);
-			try {
-				response = handle_request(request);
-			} catch (std::exception &e) {
-				logger.error("Exception while handling request: " + std::string(e.what()));
-				response = Response(500);
-			}
-		}
-
-		if (response.getStatus() >= 400) {
-			response.setBody(getDefaultErrorPage(response.getStatus()));
-			response.addHeader("Content-Length", std::to_string(response.getBody().size()));
-		}
-
-		logger.debug("Response: " + response.getStatusString());
-
-		if (FD_ISSET(sockets[n], &wfds)) {
-			ssize_t send_result = send(client_socket, response.toString().c_str(), response.toString().size(), 0);
-			if (send_result < 0) {
-				logger.error("Failed to write to socket");
-			}
-		} else {
-			logger.log("No data to write", 0);
-		}
-
-
-		FD_ZERO(&wfds);
-		FD_ZERO(&rfds);
-		FD_ZERO(&efds);
-
-		close(client_socket);
-
-		logger.debug("Finished handling request");
+		FD_SET(sockets[n], &wfds);
 
 	}
+	int maxfd = sockets[0];
+	for (int n = 1; n < (int) listenPairs.size() && n < 1024; n++) {
+		if (sockets[n] > maxfd) {
+			maxfd = sockets[n];
+		}
+	}
+	struct timeval tv;
+	tv.tv_sec = 0;
+	tv.tv_usec = 100000;
+	int retval = select(maxfd + 1, &rfds, &wfds, &efds, &tv);
+	if (retval == -1) {
+		logger.error("Error while waiting for socket");
+		return -1;
+	} else if (retval) {
+		for (int n = 0; n < (int) listenPairs.size() && n < 1024; n++) {
+			if (FD_ISSET(sockets[n], &rfds)) {
+				int new_socket;
+				if ((new_socket = accept(sockets[n], NULL, NULL)) < 0) {
+					logger.error("Failed to accept connection");
+					return -1;
+				}
+				logger.debug("Accepted connection");
+				int flags = fcntl(new_socket, F_SETFL, O_NONBLOCK);
+				if (flags < 0) {
+					logger.error("Failed to set socket to non-blocking");
+					return -1;
+				}
+				FD_SET(new_socket, &rfds);
+				FD_SET(new_socket, &efds);
+				FD_SET(new_socket, &wfds);
+				client_to_socket[new_socket] = sockets[n];
+				clients.push_back(new_socket);
+				if (new_socket > maxfd) {
+					maxfd = new_socket;
+				}
+			}
+			if (FD_ISSET(sockets[n], &efds)) {
+				logger.error("Error on socket");
+				return -1;
+			}
+		}
+	} else {
+//		logger.debug("No data within 100ms");
+	}
 
+	bool error = false;
+	for (int i = 0; i < (int) clients.size(); i++) {
 
+		int client = clients[i];
+		if (client_to_socket.find(client) == client_to_socket.end()) {
+			continue;
+		}
+		logger.debug("Checking client " + std::to_string(client));
+		int sock = client_to_socket[client];
+		if (sock == 0) {
+			continue;
+		}
+		error = false;
+		if (FD_ISSET(client, &rfds)) {
+			char buffer[READ_BUFFER_SIZE] = {0};
+			ssize_t valread = recv(client, buffer, READ_BUFFER_SIZE, 0);
+
+			std::stringstream ss;
+			// Read until we get an error or the client disconnects
+			while (valread >= READ_BUFFER_SIZE) {
+				ss << std::string(buffer);
+				valread = recv(client, buffer, READ_BUFFER_SIZE, 0);
+			}
+
+			if (valread < 0) {
+				logger.error("Error while reading from client " +
+							 std::to_string(client) + " on socket " +
+							 std::to_string(sock));
+				error = true;
+			} else if (valread < READ_BUFFER_SIZE) {
+				logger.debug("Client disconnected");
+				// Remove client from map
+				clients.erase(clients.begin() + i);
+				client_to_socket.erase(client);
+				i--;
+			}
+//			if (FD_ISSET(client, &efds)) {
+//				logger.error("Error on socket " + std::to_string(client));
+//				error = true;
+//			}
+			if (!error) {
+				Response response = getResponse(ss.str());
+				std::string responsestr = response.toString();
+				logger.debug("Sending response: " + responsestr);
+				if (FD_ISSET(client, &wfds)) {
+					send(client, responsestr.c_str(), responsestr.length(), 0);
+					close(client);
+				} else {
+					logger.error("Client not ready for writing");
+				}
+			}
+			i--;
+		}
+	}
+
+	clients.clear();
+	client_to_socket.clear();
 
 	return 0;
 }
 
+Response Server::getResponse(const std::string &bufferstr) {
+
+	logger.debug("Received request: " + bufferstr);
+
+	Response response;
+	if (bufferstr.empty()) {
+		response = Response(400);
+		logger.error("Empty request");
+	} else if (bufferstr.find('\r') == std::string::npos) {
+		response = Response(400);
+		logger.error("Invalid request");
+	} else {
+		Request request(bufferstr);
+		logger.log(
+				request.getMethod() + " request on '" + request.getPath() + "'",
+				1);
+		try {
+			response = handle_request(request);
+		} catch (std::exception &e) {
+			logger.error("Exception while handling request: " +
+						 std::string(e.what()));
+			response = Response(500);
+		}
+	}
+
+	if (response.getStatus() >= 400) {
+		response.setBody(getDefaultErrorPage(response.getStatus()));
+		response.addHeader("Content-Length",
+						   std::to_string(response.getBody().size()));
+	}
+	return response;
+}
+
 Response Server::handle_request(Request request) {
 
-	logger.debug("Request: " + request.toString());
-
-	Response response(200);
-
+	Response response;
 	response.addHeader("Content-Type", "text/html");
 
 	response.setBody("<html>\n"
 					 "<body>\n"
 					 "<h1>Hello from " + this->name + "</h1>\n"
-					 "</body>\n"
-					 "</html>");
-	response.addHeader("Content-Length", std::to_string(response.getBody().size()));
+													  "<p> You requested " +
+					 request.getPath() + "</p>\n"
+										 "</body>\n"
+										 "</html>");
+	response.addHeader("Content-Length",
+					   std::to_string(response.getBody().size()));
 	response.addHeader("Connection", "close");
 	response.addHeader("Server", "webserver");
 
@@ -210,14 +259,16 @@ void Server::initDefaultErrorPages() {
 		if (Response(i).getStatusString() == "") {
 			this->error_pages[i] = "<html>\n"
 								   "<body>\n"
-								   "<h1>" + std::to_string(i) + " Unknown error</h1>\n"
+								   "<h1>" + std::to_string(i) +
+								   " Unknown error</h1>\n"
 								   "</body>\n"
 								   "</html>";
 			continue;
 		} else {
 			this->error_pages[i] = "<html>\n"
 								   "<body>\n"
-								   "<h1>" + Response(i).getStatusString() + "</h1>\n"
+								   "<h1>" + Response(i).getStatusString() +
+								   "</h1>\n"
 								   "</body>\n"
 								   "</html>";
 		}

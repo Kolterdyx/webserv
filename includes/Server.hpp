@@ -13,6 +13,7 @@
 #include "Request.hpp"
 #include "Response.hpp"
 
+#define READ_BUFFER_SIZE 8
 
 class Server {
 
@@ -29,7 +30,8 @@ private:
 	struct fd_set wfds;
 	struct fd_set efds;
 
-	char buffer[1024];
+	std::map<int, int> client_to_socket;
+	std::vector<int> clients;
 
 	std::map<int, std::string> error_pages;
 
@@ -48,6 +50,8 @@ public:
 	void init();
 
 	void initDefaultErrorPages();
+
+	Response getResponse(const std::string &bufferstr);
 };
 
 
