@@ -132,11 +132,7 @@ Response Server::handle_request(Request request) {
 	response.addHeader("Connection", "close");
 	response.addHeader("Server", "webserver");
 
-	std::time_t t = std::time(0);
-	std::tm* now = std::localtime(&t);
-	char buf[80];
-	strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S %Z", now);
-	response.addHeader("Date", std::string(buf));
+	response.addHeader("Date", datetime("%a, %d %b %Y %H:%M:%S %Z"));
 
 	return response;
 }

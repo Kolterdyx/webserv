@@ -41,5 +41,6 @@ namespace std {
 std::vector<std::string> split(const std::string &str, char split_char);
 std::string trim(std::string str, std::string chars);
 std::string to_lower(const std::string &str);
+std::string datetime(const std::string &format = "%Y%m%dT%H%M%SZ");
 
 #endif //UTILS_HPP

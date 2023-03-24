@@ -2,6 +2,7 @@
 // Created by Ciro Garcia belmonte on 3/23/23.
 //
 
+#include "util.hpp"
 #include "Logger.hpp"
 
 const int Logger::DEBUG = 0;
@@ -123,14 +124,8 @@ std::string Logger::applyFormat(const std::string &message, bool color, int leve
 		_patterns["%message%"] = BG_RED + message;
 	}
 
-	std::time_t time = std::time(nullptr);
-	std::tm *tm = std::localtime(&time);
-	std::ostringstream oss1;
-	std::ostringstream oss2;
-	oss1 << std::put_time(tm, "%Y-%m-%d");
-	oss2 << std::put_time(tm, "%H:%M:%S");
-	_patterns["%date%"] = oss1.str();
-	_patterns["%time%"] = oss2.str();
+	_patterns["%date%"] = datetime("%Y-%m-%d");
+	_patterns["%time%"] = datetime("%H:%M:%S");
 
 	for (std::map<int, std::string>::iterator it = _levelnames_color.begin(); it != _levelnames_color.end(); ++it) {
 		if (level < it->first) {

@@ -69,3 +69,11 @@ std::string to_lower(const std::string &str) {
 	}
 	return lower;
 }
+
+std::string datetime(const std::string &format) {
+	time_t t = time(NULL);
+	tm* now = localtime(&t);
+	char buf[format.size() * 2];
+	strftime(buf, sizeof(buf), format.c_str(), now);
+	return std::string(buf);
+}
