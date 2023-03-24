@@ -12,6 +12,8 @@
 #include <unistd.h>
 #include "Request.hpp"
 #include "Response.hpp"
+#include "MimeTypes.hpp"
+#include "Route.hpp"
 
 #define READ_BUFFER_SIZE 8
 
@@ -20,8 +22,6 @@ class Server {
 private:
 	std::vector<std::pair<std::string, int> > listenPairs;
 	std::string name;
-
-
 	Logger logger;
 
 	int sockets[1024];
@@ -32,26 +32,44 @@ private:
 
 	std::map<int, int> client_to_socket;
 	std::vector<int> clients;
+	std::map<int, struct sockaddr> client_addresses;
 
-	std::map<int, std::string> error_pages;
+	std::string root_path;
+	std::map<std::string, Route> routes;
 
 	Response handle_request(Request buffer);
 
-
 public:
+
+
 	Server();
-	Server(const std::vector<std::pair<std::string, int> >& listen, const std::string &name);
+
+	Server(const std::vector<std::pair<std::string, int> > &listen,
+		   const std::string &name);
+
 	~Server();
+
+	const std::string &getRootPath() const;
+
+	void setRootPath(const std::string &rootPath);
 
 	int run();
 
-	const std::string &getDefaultErrorPage(int status);
+	std::string getDefaultErrorPage(int status);
 
 	void init();
 
 	void initDefaultErrorPages();
 
-	Response getResponse(const std::string &bufferstr);
+	Response getResponse(const std::string &bufferstr, int client);
+
+	void addRoute(const Route &route);
+
+	void setErrorPage(int status, const std::string& path);
+
+	void setIndex(const std::string& index);
+
+	Logger &getLogger();
 };
 
 

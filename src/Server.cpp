@@ -77,7 +77,7 @@ void Server::init() {
 	}
 	FD_ZERO(&rfds);
 	FD_ZERO(&wfds);
-	FD_ZERO(&efds);
+//	FD_ZERO(&efds);
 }
 
 
@@ -85,7 +85,7 @@ int Server::run() {
 	this->logger.setLevel(0);
 	for (int n = 0; n < (int) listenPairs.size() && n < 1024; n++) {
 		FD_SET(sockets[n], &rfds);
-		FD_SET(sockets[n], &efds);
+//		FD_SET(sockets[n], &efds);
 		FD_SET(sockets[n], &wfds);
 
 	}
@@ -106,10 +106,13 @@ int Server::run() {
 		for (int n = 0; n < (int) listenPairs.size() && n < 1024; n++) {
 			if (FD_ISSET(sockets[n], &rfds)) {
 				int new_socket;
-				if ((new_socket = accept(sockets[n], NULL, NULL)) < 0) {
+				struct sockaddr address;
+				socklen_t addrlen = sizeof(address);
+				if ((new_socket = accept(sockets[n], &address, &addrlen)) < 0) {
 					logger.error("Failed to accept connection");
 					return -1;
 				}
+				client_addresses[new_socket] = address;
 				logger.debug("Accepted connection");
 				int flags = fcntl(new_socket, F_SETFL, O_NONBLOCK);
 				if (flags < 0) {
@@ -117,7 +120,7 @@ int Server::run() {
 					return -1;
 				}
 				FD_SET(new_socket, &rfds);
-				FD_SET(new_socket, &efds);
+//				FD_SET(new_socket, &efds);
 				FD_SET(new_socket, &wfds);
 				client_to_socket[new_socket] = sockets[n];
 				clients.push_back(new_socket);
@@ -170,12 +173,8 @@ int Server::run() {
 				client_to_socket.erase(client);
 				i--;
 			}
-//			if (FD_ISSET(client, &efds)) {
-//				logger.error("Error on socket " + std::to_string(client));
-//				error = true;
-//			}
 			if (!error) {
-				Response response = getResponse(ss.str());
+				Response response = getResponse(ss.str(), 0);
 				std::string responsestr = response.toString();
 				logger.debug("Sending response: " + responsestr);
 				if (FD_ISSET(client, &wfds)) {
@@ -195,7 +194,7 @@ int Server::run() {
 	return 0;
 }
 
-Response Server::getResponse(const std::string &bufferstr) {
+Response Server::getResponse(const std::string &bufferstr, int client) {
 
 	logger.debug("Received request: " + bufferstr);
 
@@ -207,10 +206,8 @@ Response Server::getResponse(const std::string &bufferstr) {
 		response = Response(400);
 		logger.error("Invalid request");
 	} else {
-		Request request(bufferstr);
-		logger.log(
-				request.getMethod() + " request on '" + request.getPath() + "'",
-				1);
+		Request request(bufferstr, client_addresses[client]);
+		logger.info(request.getMethod() + " request on '" + request.getPath() + "'");
 		try {
 			response = handle_request(request);
 		} catch (std::exception &e) {
@@ -231,46 +228,86 @@ Response Server::getResponse(const std::string &bufferstr) {
 Response Server::handle_request(Request request) {
 
 	Response response;
-	response.addHeader("Content-Type", "text/html");
+	if (request.getMethod() == "GET") {
+		std::string path = request.getPath();
+		std::string file_path = combine_path(getRootPath(), path, true);
+		logger.debug("File path: " + file_path);
+		if (file_path.find(getRootPath()) != 0) {
+			logger.error("Invalid path");
+			return Response(403);
+		}
+		// Check if file exists
+		std::ifstream file(file_path);
+		if (!file.good()) {
+			logger.error("File not found");
+			return Response(404);
+		}
+		std::string file_content;
+		std::string line;
+		while (std::getline(file, line, '\n')) {
+			file_content += line + "\n";
+		}
+		response.setBody(file_content);
+		std::string content_type = MimeTypes::getType(file_path);
+		response.addHeader("Content-Type", content_type);
 
-	response.setBody("<html>\n"
-					 "<body>\n"
-					 "<h1>Hello from " + this->name + "</h1>\n"
-													  "<p> You requested " +
-					 request.getPath() + "</p>\n"
-										 "</body>\n"
-										 "</html>");
-	response.addHeader("Content-Length",
-					   std::to_string(response.getBody().size()));
+	} else if (request.getMethod() == "POST") {
+
+	}
+
+
 	response.addHeader("Connection", "close");
 	response.addHeader("Server", "webserver");
-
 	response.addHeader("Date", datetime("%a, %d %b %Y %H:%M:%S %Z"));
 
 	return response;
 }
 
-const std::string &Server::getDefaultErrorPage(int status) {
-	return this->error_pages[status];
+std::string Server::getDefaultErrorPage(int status) {
+	return this->routes["*"].getErrorPage(status);
 }
 
 void Server::initDefaultErrorPages() {
-	for (int i = 0; i < 1000; i++) {
+	for (int i = 0; i < 600; i++) {
 		if (Response(i).getStatusString() == "") {
-			this->error_pages[i] = "<html>\n"
+			this->routes["*"].setRawErrorPage(i, "<html>\n"
 								   "<body>\n"
 								   "<h1>" + std::to_string(i) +
 								   " Unknown error</h1>\n"
 								   "</body>\n"
-								   "</html>";
+								   "</html>");
 			continue;
 		} else {
-			this->error_pages[i] = "<html>\n"
+			this->routes["*"].setRawErrorPage(i, "<html>\n"
 								   "<body>\n"
 								   "<h1>" + Response(i).getStatusString() +
 								   "</h1>\n"
 								   "</body>\n"
-								   "</html>";
+								   "</html>");
 		}
 	}
+}
+
+const std::string &Server::getRootPath() const {
+	return root_path;
+}
+
+void Server::setRootPath(const std::string &rootPath) {
+	root_path = rootPath;
+}
+
+void Server::addRoute(const Route& route) {
+	this->routes[route.getPath()] = route;
+}
+
+void Server::setErrorPage(int status, const std::string& path) {
+	this->routes["*"].setErrorPage(status, path);
+}
+
+void Server::setIndex(const std::string& index) {
+	this->routes["*"].setIndex(index);
+}
+
+Logger &Server::getLogger() {
+	return logger;
 }
