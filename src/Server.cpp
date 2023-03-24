@@ -1,5 +1,6 @@
 
 #include <sys/fcntl.h>
+#include <sys/stat.h>
 #include "Server.hpp"
 
 
@@ -303,6 +304,14 @@ Response Server::handle_get(const Request& request, const std::string& path) {
 	if (file_path.find(getRootPath()) != 0) {
 		logger.error("Invalid path");
 		return Response(403);
+	}
+	struct stat statbuf;
+	if (stat(file_path.c_str(), &statbuf) != 0) {
+		logger.error("File not found");
+		return Response(404);
+	}
+	if (S_ISDIR(statbuf.st_mode)) {
+		file_path = combine_path(file_path, this->routes["*"].getIndex(), true);
 	}
 	// Check if file exists
 	std::ifstream file(file_path);
