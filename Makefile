@@ -4,7 +4,7 @@ CFLAGS = -Wall -Wextra -Werror -O2 -MD -g -std=c++98
 
 NAME = webserv
 SRC_DIR = src
-SRC = main.cpp Webserv.cpp Server.cpp XML/XMLDocument.cpp XML/XMLElement.cpp UUID/UUID.cpp Logger.cpp Request.cpp Response.cpp util.cpp
+SRC = main.cpp Webserv.cpp Server.cpp XML/XMLDocument.cpp XML/XMLElement.cpp UUID/UUID.cpp Logger.cpp Request.cpp Response.cpp util.cpp MimeTypes.cpp Route.cpp
 BUILD_DIR = build
 INCLUDE_DIR = includes
 INCLUDES = -I./$(INCLUDE_DIR)

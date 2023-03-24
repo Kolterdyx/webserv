@@ -1,6 +1,7 @@
 <webserv>
     <server name="test">
         <listen host="localhost" port="8080"/>
+        <root>/Users/cigarcia/Documents/Projects/webserv/run/data</root>
     </server>
     <server name="example">
         <listen host="localhost" port="4242"/>
