@@ -54,7 +54,7 @@ Server::~Server() {
 int Server::run() {
 	this->logger.setLevel(1);
 	int poll_result = poll(this->fds, 1, -1);
-	if (poll_result < 0) {
+	if (poll_result <= 0) {
 		logger.error("Failed to run");
 		return 1;
 	}
