@@ -84,9 +84,130 @@ Webserver::Webserver(const XMLDocument &config) {
 		}
 
 		Server server(listenPairs, name);
+		if (!initServer(&server, *it)) {
+			continue;
+		}
 		logger.info("Created server with name '" + name + "'");
 		this->servers.push_back(server);
 
 	}
 	logger.info("Created " + std::to_string(this->servers.size()) + " servers");
+}
+
+bool Webserver::initServer(Server *server, XMLElement* element)
+{
+	Route rootRoute;
+
+	XMLElementVector rootPaths = element->query("root");
+	XMLElementVector routes = element->query("route");
+	XMLElementVector errorPages = element->query("error_page");
+	XMLElementVector indexFiles = element->query("index");
+	if (rootPaths.empty()) {
+		logger.warn("No root directive found. Ignoring server.");
+		return false;
+	}
+	else if (rootPaths.size() > 1) {
+		logger.warn("Multiple root directives found. Ignoring server.");
+		return false;
+	}
+
+	// Load routes. They can override values from the main server
+	for (XMLElementVector::iterator it = routes.begin(); it != routes.end(); it++) {
+		if (!(*it)->hasAttribute("path") || !(*it)->hasAttribute("location")) {
+			logger.warn("Invalid route directive. Ignoring route.");
+			continue;
+		}
+		server->addRoute(Route(*it, server->getLogger()));
+	}
+
+	// Load error pages for the whole server
+	for (XMLElementVector::iterator it = errorPages.begin(); it != errorPages.end(); it++) {
+		if (!(*it)->hasAttribute("code") || !(*it)->hasAttribute("location")) {
+			logger.warn("Invalid error_page directive. Ignoring error_page.");
+			continue;
+		}
+
+		int status;
+
+		if (!(*it)->hasAttribute("status")) {
+			logger.warn("Invalid error_page directive. Ignoring error_page.");
+			continue;
+		}
+
+		try {
+			status = std::stoi((*it)->getAttribute("status"));
+		} catch (std::invalid_argument &e) {
+			logger.warn("Invalid error code. Ignoring error_page.");
+			continue;
+		}
+
+		if (!(*it)->hasAttribute("path")) {
+			logger.warn("Invalid error_page directive. Ignoring error_page.");
+			continue;
+		}
+		std::string path = (*it)->getAttribute("path");
+		rootRoute.setErrorPage(status, path);
+	}
+
+	// Load index files
+	std::string index;
+	if (indexFiles.empty()) {
+		logger.warn("No index directive found. Using default (index.html).");
+		index = "index.html";
+	}
+	else if (indexFiles.size() > 1) {
+		logger.warn("Multiple index directives found. Using first one.");
+		index = indexFiles[0]->getContent();
+	}
+
+	// Load cgi stuff
+	XMLElementVector cgiConfigs = element->query("cgi");
+	if (cgiConfigs.size() == 1) {
+		XMLElement *cgiConfig = cgiConfigs[0];
+		rootRoute.setCgiBinPath(cgiConfig->getAttribute("path"));
+		rootRoute.setCgiExtension(cgiConfig->getAttribute("ext"));
+		bool cgiEnabled;
+		if (cgiConfig->getAttribute("enabled") == "true") {
+			cgiEnabled = true;
+		} else if (!cgiConfig->hasAttribute("enabled") || cgiConfig->getAttribute("enabled") == "false") {
+			cgiEnabled = false;
+		} else {
+			logger.warn("Invalid cgi directive. Ignoring cgi.");
+			cgiEnabled = false;
+		}
+		rootRoute.setCgiEnabled(cgiEnabled);
+	}
+
+	// Directory listing
+	XMLElementVector dirListingConfigs = element->query("directory_listing");
+	bool dirListingEnabled;
+	std::string dirListingIndex;
+	if (dirListingConfigs.size() == 1) {
+		XMLElement *dirListingConfig = dirListingConfigs[0];
+		if (dirListingConfig->getAttribute("enabled") == "true") {
+			dirListingEnabled = true;
+		} else if (!dirListingConfig->hasAttribute("enabled") || dirListingConfig->getAttribute("enabled") == "false") {
+			dirListingEnabled = false;
+		} else {
+			logger.warn("Invalid directory_listing directive. Ignoring directory_listing.");
+			dirListingEnabled = false;
+		}
+		if (dirListingConfig->hasAttribute("index")) {
+			dirListingIndex = dirListingConfig->getContent();
+		} else {
+			dirListingIndex = "index.html";
+		}
+	} else {
+		dirListingEnabled = false;
+		dirListingIndex = "index.html";
+	}
+	rootRoute.setDirectoryListingEnabled(dirListingEnabled);
+	rootRoute.setDirectoryListingPath(dirListingIndex);
+
+	rootRoute.setPath("*");
+	rootRoute.setIndex(index);
+
+	server->addRoute(rootRoute);
+	server->setRootPath(rootPaths[0]->getContent());
+	return true;
 }

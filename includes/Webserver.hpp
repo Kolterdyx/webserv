@@ -23,6 +23,7 @@ public:
 
 	void run();
 
+	bool initServer(Server *server, XMLElement *element);
 };
 
 
