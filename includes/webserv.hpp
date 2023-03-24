@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include "Webserver.hpp"
-#include "custom_specifications.hpp"
+#include "util.hpp"
+#include "macros.hpp"
 
 #endif // SERVER_HPP

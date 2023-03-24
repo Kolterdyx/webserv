@@ -1,10 +1,10 @@
 
 CC = c++
-CFLAGS = -Wall -Wextra -Werror -DM -g -std=c++98
+CFLAGS = -Wall -Wextra -Werror -O2 -MD -g -std=c++98
 
 NAME = webserv
 SRC_DIR = src
-SRC = main.cpp Webserv.cpp Server.cpp XML/XMLDocument.cpp XML/XMLElement.cpp UUID/UUID.cpp
+SRC = main.cpp Webserv.cpp Server.cpp XML/XMLDocument.cpp XML/XMLElement.cpp UUID/UUID.cpp Logger.cpp Request.cpp Response.cpp util.cpp
 BUILD_DIR = build
 INCLUDE_DIR = includes
 INCLUDES = -I./$(INCLUDE_DIR)
@@ -26,6 +26,12 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@echo "\033[0;32mCompiling $<\033[0m"
 	@mkdir -p $(basename $@)
 	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+testSocketClient:
+	@echo "\033[0;32mCompiling $(SRC_DIR)/testSocketClient.cpp\033[0m"
+	@$(CC) $(CFLAGS) $(INCLUDES) -c $(SRC_DIR)/testSocketClient.cpp -o $(OBJ_DIR)/testSocketClient.o
+	@$(CC) $(CFLAGS) $(OBJ_DIR)/testSocketClient.o $(LIBS) $(INCLUDES) -o $(BUILD_DIR)/testSocketClient
+	@echo "\033[0;33mFinished building testSocketClient\033[0m"
 
 $(NAME): $(OBJ_FILES)
 	@echo "\033[0;34mLinking $@\033[0m"

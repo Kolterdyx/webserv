@@ -3,7 +3,7 @@
 ## TODO
 
 - [ ] Define project structure
-- [X] Define config file format
+- [X] Define config file applyFormat
 - [X] Define config file syntax
 - [X] Implement config file parser
 - [X] Parse configuration file

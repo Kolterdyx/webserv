@@ -3,10 +3,16 @@
 
 #include <iostream>
 #include "XML/XMLDocument.hpp"
+#include "macros.hpp"
+#include "Server.hpp"
 
 class Webserver {
 private:
 	XMLDocument config;
+
+	Logger logger;
+
+	std::vector<Server> servers;
 
 public:
 	Webserver();

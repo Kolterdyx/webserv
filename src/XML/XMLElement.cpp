@@ -8,7 +8,7 @@
 #include "XML/XMLParseError.hpp"
 #include "XML/XMLAccessError.hpp"
 #include "XML/XMLModifyError.hpp"
-#include "utils.hpp"
+#include "util.hpp"
 
 XMLElement::XMLElement(const std::string &name) : uuid(UUID()) {
     this->name = name;

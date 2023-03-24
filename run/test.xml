@@ -2,10 +2,4 @@
     <server name="test">
         <listen host="localhost" port="8080"/>
     </server>
-    <server name="test">
-        <patata host="localhost" port="8080"/>
-    </server>
-    <server name="test">
-        <listen host="localhost" port="8080"/>
-    </server>
 </webserv>
