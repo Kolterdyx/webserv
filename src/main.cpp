@@ -1,6 +1,5 @@
 #include <iostream>
 #include <Webserver.hpp>
-#include <Socket.hpp>
 #include "XML/XMLDocument.hpp"
 
 int main(int argc, char *argv[]) {

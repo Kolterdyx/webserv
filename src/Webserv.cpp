@@ -1,7 +1,4 @@
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <poll.h>
+
 #include "Webserver.hpp"
 
 void Webserver::run()
