@@ -67,8 +67,9 @@ void Server::init() {
 			logger.error("Failed to listen on socket");
 			return;
 		}
-		logger.info("Listening on " + listenPairs[i].first + ":" +
-					std::to_string(listenPairs[i].second));
+		//TODO: This needs to be somewhere else
+//		logger.info("Listening on " + listenPairs[i].first + ":" +
+//					std::to_string(listenPairs[i].second));
 
 		int flags = fcntl(sockets[i], F_SETFL, O_NONBLOCK);
 		if (flags < 0) {
@@ -83,7 +84,7 @@ void Server::init() {
 
 
 int Server::run() {
-	this->logger.setLevel(0);
+	this->logger.setLevel(1);
 	for (int n = 0; n < (int) listenPairs.size() && n < 1024; n++) {
 		FD_SET(sockets[n], &rfds);
 //		FD_SET(sockets[n], &efds);
@@ -145,7 +146,6 @@ int Server::run() {
 		if (client_to_socket.find(client) == client_to_socket.end()) {
 			continue;
 		}
-		logger.debug("Checking client " + std::to_string(client));
 		int sock = client_to_socket[client];
 		if (sock == 0) {
 			continue;
@@ -163,9 +163,12 @@ int Server::run() {
 			}
 
 			if (valread < 0) {
-				logger.error("Error while reading from client " +
-							 std::to_string(client) + " on socket " +
-							 std::to_string(sock));
+				// These two lines stop the stream buffer from being corrupted
+				// for some reason. I don't know why.
+				std::to_string(client);
+				std::to_string(sock);
+				// This is needed to not panic and return 400 for anything at
+				// random.
 				error = true;
 			} else if (valread < READ_BUFFER_SIZE) {
 				logger.debug("Client disconnected");
@@ -177,7 +180,8 @@ int Server::run() {
 			if (!error) {
 				Response response = getResponse(ss.str(), 0);
 				std::string responsestr = response.toString();
-				logger.debug("Sending response: " + responsestr);
+				logger.log("Response: " + response.getStatusString(), 9);
+//				logger.debug("Sending response: " + responsestr);
 				if (FD_ISSET(client, &wfds)) {
 					send(client, responsestr.c_str(), responsestr.length(), 0);
 					close(client);
@@ -197,8 +201,6 @@ int Server::run() {
 
 Response Server::getResponse(const std::string &bufferstr, int client) {
 
-	logger.debug("Received request: " + bufferstr);
-
 	Response response;
 	if (bufferstr.empty()) {
 		response = Response(400);
@@ -208,7 +210,6 @@ Response Server::getResponse(const std::string &bufferstr, int client) {
 		logger.error("Invalid request");
 	} else {
 		Request request(bufferstr, client_addresses[client]);
-		logger.info(request.getMethod() + " request on '" + request.getPath() + "'");
 		try {
 			response = handle_request(request);
 		} catch (std::exception &e) {
@@ -223,10 +224,13 @@ Response Server::getResponse(const std::string &bufferstr, int client) {
 		response.addHeader("Content-Length",
 						   std::to_string(response.getBody().size()));
 	}
+
 	return response;
 }
 
 Response Server::handle_request(Request request) {
+
+	logger.log("Request: " + request.getMethod() + " " + request.getPath(), 9);
 
 	Response response;
 	std::string path = request.getPath();
