@@ -2,6 +2,8 @@
 // Created by Ciro Garcia belmonte on 3/24/23.
 //
 
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include "Request.hpp"
 
 Request::Request() {
@@ -46,8 +48,11 @@ std::string Request::getMethod() {
 	return method;
 }
 
-Request::Request(const std::string &raw_request) {
+Request::Request(const std::string raw_request, sockaddr addr) {
 	parse_http_request(raw_request);
+	char ip[INET_ADDRSTRLEN];
+	inet_ntop(AF_INET, &(((sockaddr_in *)&addr)->sin_addr), ip, INET_ADDRSTRLEN);
+	origin_ip = std::string(ip);
 }
 
 void Request::parse_header(const std::string &header_string) {
@@ -125,3 +130,9 @@ void Request::parse_http_request(std::string request) {
 std::string Request::getPath() {
 	return path;
 }
+
+const std::string &Request::getOriginIp() const {
+	return origin_ip;
+}
+
+

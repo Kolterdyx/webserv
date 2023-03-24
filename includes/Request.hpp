@@ -10,6 +10,7 @@
 #include <ostream>
 #include <sstream>
 #include <iostream>
+#include <sys/socket.h>
 #include "util.hpp"
 
 class Request {
@@ -22,12 +23,19 @@ private:
 	std::string path;
 	std::string version;
 
+	std::string origin_ip;
+public:
+	const std::string &getOriginIp() const;
+
+private:
+
 	void parse_header(const std::string &header_string);
 
 public:
 
 	Request();
-	explicit Request(const std::string &raw_request);
+	Request(const std::string raw_request, sockaddr addr);
+
 	~Request();
 
 	void setHeader(const std::string &key, const std::string &value);
@@ -52,6 +60,7 @@ public:
 	void parse_http_request(std::string request);
 
 	std::string getPath();
+
 };
 
 
