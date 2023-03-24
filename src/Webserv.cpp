@@ -48,56 +48,48 @@ Webserver::Webserver(const XMLDocument &config) {
 			   9);
 	for (XMLElementVector::iterator it = serverConfigs.begin(); it != serverConfigs.end(); it++) {
 		XMLElementVector listens = (*it)->query("listen");
-		if (listens.size() > 1) {
-			logger.error("Multiple listen directives found. Ignoring server.");
-			continue;
-		}
 		if (listens.empty()) {
 			logger.error("No listen directive found. Ignoring server.");
 			continue;
 		}
-		XMLElement *listen = listens[0];
-		if (!listen) {
-			logger.error("No listen directive found. Ignoring server.");
-			continue;
-		}
-		if (!listen->hasAttribute("ip") && !listen->hasAttribute("port")) {
-			logger.error("Invalid listen directive. Ignoring server.");
-			continue;
-		}
-		std::string ip;
-		if (!listen->hasAttribute("ip")) {
-			ip = "127.0.0.1";
-		} else {
-			ip = listen->getAttribute("ip");
-		}
-		int port;
-		try {
-			if (!listen->hasAttribute("port")) {
-				port = 8080;
-			} else {
-				port = std::stoi(listen->getAttribute("port"));
+		std::vector<std::pair<std::string, int> > listenPairs;
+		for (XMLElementVector::iterator listen = listens.begin(); listen != listens.end(); listen++) {
+			if (!(*listen)->hasAttribute("ip") &&
+				!(*listen)->hasAttribute("port")) {
+				logger.error("Invalid listen directive. Ignoring server.");
+				continue;
 			}
-		} catch (std::exception &e) {
-			logger.error("Invalid port number. Ignoring server.");
-			continue;
-		}
+			std::string ip;
+			if (!(*listen)->hasAttribute("ip")) {
+				ip = "0.0.0.0";
+			} else {
+				ip = (*listen)->getAttribute("ip");
+			}
+			int port = std::stoi((*listen)->getAttribute("port"));
 
-		if (port < 0 || port > 65535) {
-			logger.error("Invalid port number. Ignoring server.");
-			continue;
+			if (!(*listen)->hasAttribute("port")) {
+				port = 80;
+			} else {
+				try {
+					port = std::stoi((*listen)->getAttribute("port"));
+				} catch (std::invalid_argument &e) {
+					logger.error("Invalid port number. Ignoring server.");
+					continue;
+				}
+			}
+			listenPairs.push_back(std::pair<std::string, int>(ip, port));
 		}
-
 		std::string name;
-		if ((*it)->hasAttribute("name")) {
-			name = (*it)->getAttribute("name");
-		} else {
+		if (!(*it)->hasAttribute("name")) {
 			name = "Unnamed server";
+		} else {
+			name = (*it)->getAttribute("name");
 		}
 
-		Server server(ip, port, name);
-		logger.info("Created server on " + ip + ":" + std::to_string(port) + " with name " + name);
+		Server server(listenPairs, name);
+		logger.info("Created server with name '" + name + "'");
 		this->servers.push_back(server);
+
 	}
 	logger.info("Created " + std::to_string(this->servers.size()) + " servers");
 }

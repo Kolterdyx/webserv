@@ -2,4 +2,7 @@
     <server name="test">
         <listen host="localhost" port="8080"/>
     </server>
+    <server name="example">
+        <listen host="localhost" port="4242"/>
+    </server>
 </webserv>

@@ -17,28 +17,37 @@
 class Server {
 
 private:
-	std::string ip;
-	int port;
+	std::vector<std::pair<std::string, int> > listenPairs;
 	std::string name;
+
 
 	Logger logger;
 
-	int server_fd;
-	struct sockaddr_in address;
-	struct pollfd fds[1];
+	int sockets[1024];
+	struct sockaddr_in addresses[1024];
+	struct fd_set rfds;
+	struct fd_set wfds;
+	struct fd_set efds;
 
-	char buffer[8192];
+	char buffer[1024];
+
+	std::map<int, std::string> error_pages;
 
 	Response handle_request(Request buffer);
 
 
 public:
 	Server();
-	Server(const std::string &ip, int port, const std::string &name);
+	Server(const std::vector<std::pair<std::string, int> >& listen, const std::string &name);
 	~Server();
 
 	int run();
 
+	const std::string &getDefaultErrorPage(int status);
+
+	void init();
+
+	void initDefaultErrorPages();
 };
 
 

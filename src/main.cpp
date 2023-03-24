@@ -8,12 +8,14 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	XMLDocument config;
-	config.fromFile(argv[1]);
+//	XMLDocument config;
+//	config.fromFile(argv[1]);
+//
+//
+//	Webserver server(config);
+//	server.run();
 
 
-	Webserver server(config);
-	server.run();
 
 	return 0;
 }
