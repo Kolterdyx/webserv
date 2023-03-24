@@ -42,5 +42,6 @@ std::vector<std::string> split(const std::string &str, char split_char);
 std::string trim(std::string str, std::string chars);
 std::string to_lower(const std::string &str);
 std::string datetime(const std::string &format = "%Y%m%dT%H%M%SZ");
+std::string combine_path(const std::string &path1, const std::string &path2, bool sanitize = true);
 
 #endif //UTILS_HPP

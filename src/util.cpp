@@ -77,3 +77,34 @@ std::string datetime(const std::string &format) {
 	strftime(buf, sizeof(buf), format.c_str(), now);
 	return std::string(buf);
 }
+
+std::string combine_path(const std::string &path1, const std::string &path2, bool sanitize) {
+	std::string path = path1;
+	if (path1[path1.size() - 1] != '/' && path2[0] != '/')
+		path += '/';
+	else if (path1[path1.size() - 1] == '/' && path2[0] == '/')
+		path = path.substr(0, path.size() - 1);
+	path += path2;
+
+	// Remove double slashes and double dots
+	if (sanitize) {
+		std::vector<std::string> parts = split(path, '/');
+		std::vector<std::string> new_parts;
+		for (std::vector<std::string>::iterator it = parts.begin();
+			 it != parts.end(); ++it) {
+			if (*it == "..") {
+				if (!new_parts.empty())
+					new_parts.pop_back();
+			} else if (*it != "." && !(*it).empty()) {
+				new_parts.push_back(*it);
+			}
+		}
+		path.clear();
+		for (std::vector<std::string>::iterator it = new_parts.begin();
+			 it != new_parts.end(); ++it) {
+			path += "/" + *it;
+		}
+	}
+
+	return path;
+}
