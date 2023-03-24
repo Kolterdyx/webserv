@@ -84,7 +84,7 @@ void Server::init() {
 
 
 int Server::run() {
-	this->logger.setLevel(1);
+	this->logger.setLevel(0);
 	for (int n = 0; n < (int) listenPairs.size() && n < 1024; n++) {
 		FD_SET(sockets[n], &rfds);
 //		FD_SET(sockets[n], &efds);
@@ -220,10 +220,13 @@ Response Server::getResponse(const std::string &bufferstr, int client) {
 	}
 
 	if (response.getStatus() >= 400) {
-		response.setBody(getDefaultErrorPage(response.getStatus()));
+		response.setBody(getErrorPage(response.getStatus()));
 		response.addHeader("Content-Length",
 						   std::to_string(response.getBody().size()));
+		response.addHeader("Content-Type", "text/html");
 	}
+
+	logger.debug("Response raw: " + response.toString());
 
 	return response;
 }
@@ -250,12 +253,14 @@ Response Server::handle_request(Request request) {
 	return response;
 }
 
-std::string Server::getDefaultErrorPage(int status) {
+std::string Server::getErrorPage(int status) {
 	return this->routes["*"].getErrorPage(status);
 }
 
 void Server::initDefaultErrorPages() {
 	for (int i = 0; i < 600; i++) {
+		if (!this->routes["*"].getErrorPage(i).empty())
+			continue;
 		if (Response(i).getStatusString().empty()) {
 			this->routes["*"].setRawErrorPage(i, "<html>\n"
 								   "<body>\n"

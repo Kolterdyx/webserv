@@ -209,5 +209,6 @@ bool Webserver::initServer(Server *server, XMLElement* element)
 
 	server->addRoute(rootRoute);
 	server->setRootPath(rootPaths[0]->getContent());
+	server->initDefaultErrorPages();
 	return true;
 }

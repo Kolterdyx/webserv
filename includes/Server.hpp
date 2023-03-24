@@ -55,7 +55,7 @@ public:
 
 	int run();
 
-	std::string getDefaultErrorPage(int status);
+	std::string getErrorPage(int status);
 
 	void init();
 
