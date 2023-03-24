@@ -70,6 +70,10 @@ public:
 	void setIndex(const std::string& index);
 
 	Logger &getLogger();
+
+	Response handle_get(const Request& request, const std::string& path);
+
+	Response handle_post(const Request& request, const std::string& path);
 };
 
 

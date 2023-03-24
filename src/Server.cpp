@@ -228,31 +228,13 @@ Response Server::getResponse(const std::string &bufferstr, int client) {
 Response Server::handle_request(Request request) {
 
 	Response response;
+	std::string path = request.getPath();
 	if (request.getMethod() == "GET") {
-		std::string path = request.getPath();
-		std::string file_path = combine_path(getRootPath(), path, true);
-		logger.debug("File path: " + file_path);
-		if (file_path.find(getRootPath()) != 0) {
-			logger.error("Invalid path");
-			return Response(403);
-		}
-		// Check if file exists
-		std::ifstream file(file_path);
-		if (!file.good()) {
-			logger.error("File not found");
-			return Response(404);
-		}
-		std::string file_content;
-		std::string line;
-		while (std::getline(file, line, '\n')) {
-			file_content += line + "\n";
-		}
-		response.setBody(file_content);
-		std::string content_type = MimeTypes::getType(file_path);
-		response.addHeader("Content-Type", content_type);
-
+		response = handle_get(request, path);
 	} else if (request.getMethod() == "POST") {
-
+		response = handle_post(request, path);
+	} else if (request.getMethod() == "DELETE") {
+		response = handle_delete(request, path);
 	}
 
 
@@ -310,4 +292,37 @@ void Server::setIndex(const std::string& index) {
 
 Logger &Server::getLogger() {
 	return logger;
+}
+
+Response Server::handle_get(const Request& request, const std::string& path) {
+	Response response;
+
+	std::string file_path = combine_path(getRootPath(), path, true);
+	logger.debug("File path: " + file_path);
+	if (file_path.find(getRootPath()) != 0) {
+		logger.error("Invalid path");
+		return Response(403);
+	}
+	// Check if file exists
+	std::ifstream file(file_path);
+	if (!file.good()) {
+		logger.error("File not found");
+		return Response(404);
+	}
+	std::string file_content;
+	std::string line;
+	while (std::getline(file, line, '\n')) {
+		file_content += line + "\n";
+	}
+	response.setBody(file_content);
+	std::string content_type = MimeTypes::getType(file_path);
+	response.addHeader("Content-Type", content_type);
+
+	return response;
+}
+
+Response Server::handle_post(const Request& request, const std::string& path) {
+	Response response;
+
+	return response;
 }
