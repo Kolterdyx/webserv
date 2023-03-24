@@ -251,7 +251,7 @@ std::string Server::getDefaultErrorPage(int status) {
 
 void Server::initDefaultErrorPages() {
 	for (int i = 0; i < 600; i++) {
-		if (Response(i).getStatusString() == "") {
+		if (Response(i).getStatusString().empty()) {
 			this->routes["*"].setRawErrorPage(i, "<html>\n"
 								   "<body>\n"
 								   "<h1>" + std::to_string(i) +
@@ -296,6 +296,7 @@ Logger &Server::getLogger() {
 
 Response Server::handle_get(const Request& request, const std::string& path) {
 	Response response;
+	UNUSED(request);
 
 	std::string file_path = combine_path(getRootPath(), path, true);
 	logger.debug("File path: " + file_path);
@@ -322,7 +323,17 @@ Response Server::handle_get(const Request& request, const std::string& path) {
 }
 
 Response Server::handle_post(const Request& request, const std::string& path) {
-	Response response;
+	Response response(200);
+	UNUSED(request);
+	UNUSED(path);
+
+	return response;
+}
+
+Response Server::handle_delete(const Request& request, const std::string& path) {
+	Response response(200);
+	UNUSED(request);
+	UNUSED(path);
 
 	return response;
 }

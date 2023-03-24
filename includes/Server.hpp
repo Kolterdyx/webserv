@@ -74,6 +74,8 @@ public:
 	Response handle_get(const Request& request, const std::string& path);
 
 	Response handle_post(const Request& request, const std::string& path);
+
+	Response handle_delete(const Request& request, const std::string& path);
 };
 
 
