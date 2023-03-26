@@ -165,8 +165,8 @@ int Server::run() {
 			if (valread < 0) {
 				// These two lines stop the stream buffer from being corrupted
 				// for some reason. I don't know why.
-				std::to_string(client);
-				std::to_string(sock);
+				util::to_string(client);
+				util::to_string(sock);
 				// This is needed to not panic and return 400 for anything at
 				// random.
 				error = true;
@@ -222,7 +222,7 @@ Response Server::getResponse(const std::string &bufferstr, int client) {
 	if (response.getStatus() >= 400) {
 		response.setBody(getErrorPage(response.getStatus()));
 		response.addHeader("Content-Length",
-						   std::to_string(response.getBody().size()));
+						   util::to_string(response.getBody().size()));
 		response.addHeader("Content-Type", "text/html");
 	}
 
@@ -248,7 +248,7 @@ Response Server::handle_request(Request request) {
 
 	response.addHeader("Connection", "close");
 	response.addHeader("Server", "webserver");
-	response.addHeader("Date", datetime("%a, %d %b %Y %H:%M:%S %Z"));
+	response.addHeader("Date", util::datetime("%a, %d %b %Y %H:%M:%S %Z"));
 
 	return response;
 }
@@ -264,7 +264,7 @@ void Server::initDefaultErrorPages() {
 		if (Response(i).getStatusString().empty()) {
 			this->routes["*"].setRawErrorPage(i, "<html>\n"
 								   "<body>\n"
-								   "<h1>" + std::to_string(i) +
+								   "<h1>" + util::to_string(i) +
 								   " Unknown error</h1>\n"
 								   "</body>\n"
 								   "</html>");
@@ -308,7 +308,7 @@ Response Server::handle_get(const Request& request, const std::string& path) {
 	Response response;
 	UNUSED(request);
 
-	std::string file_path = combine_path(getRootPath(), path, true);
+	std::string file_path = util::combine_path(getRootPath(), path, true);
 	logger.debug("File path: " + file_path);
 	if (file_path.find(getRootPath()) != 0) {
 		logger.error("Invalid path");
@@ -320,7 +320,7 @@ Response Server::handle_get(const Request& request, const std::string& path) {
 		return Response(404);
 	}
 	if (S_ISDIR(statbuf.st_mode)) {
-		file_path = combine_path(file_path, this->routes["*"].getIndex(), true);
+		file_path = util::combine_path(file_path, this->routes["*"].getIndex(), true);
 	}
 	// Check if file exists
 	std::ifstream file(file_path.c_str());

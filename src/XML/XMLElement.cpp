@@ -119,11 +119,11 @@ XMLElement *XMLElement::fromString(const std::string &xml) {
         throw XMLParseError("Empty string.");
     if (xml[0] != '<')
         throw XMLParseError("String does not start with '<'.");
-    if (trim(xml, " \n")[trim(xml, " \n").length() - 1] != '>')
+    if (util::trim(xml, " \n")[util::trim(xml, " \n").length() - 1] != '>')
         throw XMLParseError("String does not end with '>'.");
     if (xml.find("<!--") == 0)
     {
-        element->setContent(trim(xml.substr(4, xml.length() - 7), " \t"), true);
+        element->setContent(util::trim(xml.substr(4, xml.length() - 7), " \t"), true);
         element->_isComment = true;
         element->name = "__comment__";
         return element;
@@ -245,7 +245,7 @@ std::vector<std::string> XMLElement::splitXML(std::string xmlString) {
     size_t startOpen = 0;
     size_t end = 0;
     size_t selfClosing = 0;
-    if (!trim(xmlString.substr(0, start), " \t\n").empty() && start != std::string::npos)
+    if (!util::trim(xmlString.substr(0, start), " \t\n").empty() && start != std::string::npos)
         throw XMLParseError("Invalid text content.");
     while (start != std::string::npos) {
         if (xmlString.substr(start + 1, 3) == "!--" && (start == 0 || xmlString[start - 1] != '!')) {
@@ -514,7 +514,7 @@ std::vector<XMLElement *> XMLElement::query(const std::string &selector) const {
         return std::vector<XMLElement*>();
 
     XMLElementVector result;
-    std::vector<std::string> selectors = split(selector, '/');
+    std::vector<std::string> selectors = util::split(selector, '/');
     std::string firstSelector = selectors[0];
     std::string restSelector;
     if (selectors.size() > 1) {

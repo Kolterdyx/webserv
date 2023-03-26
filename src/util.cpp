@@ -1,8 +1,12 @@
 #include "util.hpp"
 
-int std::stoi(const std::string &s) {
+int util::stoi(const std::string &s) throw (std::invalid_argument) {
     int i;
-    std::istringstream(s) >> i;
+    try {
+        std::istringstream(s) >> i;
+    } catch (std::exception &e) {
+        throw std::invalid_argument("stoi: Invalid argument");
+    }
     return i;
 }
 
@@ -12,7 +16,7 @@ int std::stoi(const std::string &s) {
  * @param split_char The char by which to split the string
  * @return An std::vector containing all of the substrings. All occurences of 'split_char' will be removed.
  */
-std::vector<std::string> split(const std::string &str, char split_char) {
+std::vector<std::string> util::split(const std::string &str, char split_char) {
 
     std::vector<std::string> result;
     std::string current;
@@ -53,7 +57,7 @@ std::vector<std::string> split(const std::string &str, char split_char) {
  * @param chars Characters to trim off from both ends
  * @return Trimmed string
  */
-std::string trim(std::string str, std::string chars) {
+std::string util::trim(std::string str, std::string chars) {
     // This function removes all the characters in the string "chars" from the beginning and end of the string "str".
 
     size_t start = str.find_first_not_of(chars);
@@ -68,7 +72,7 @@ std::string trim(std::string str, std::string chars) {
  * @param str String to convert
  * @return Lowercase string
  */
-std::string to_lower(const std::string &str) {
+std::string util::to_lower(const std::string &str) {
     std::string lower = str;
     for (std::string::iterator it = lower.begin(); it != lower.end(); ++it) {
         *it = tolower(*it);
@@ -76,7 +80,7 @@ std::string to_lower(const std::string &str) {
     return lower;
 }
 
-std::string datetime(const std::string &format) {
+std::string util::datetime(const std::string &format) {
     time_t t = time(NULL);
     tm *now = localtime(&t);
     char buf[format.size() * 2];
@@ -84,7 +88,7 @@ std::string datetime(const std::string &format) {
     return std::string(buf);
 }
 
-std::string combine_path(const std::string &path1, const std::string &path2, bool sanitize) {
+std::string util::combine_path(const std::string &path1, const std::string &path2, bool simplify) {
     std::string path = path1;
     if (path1[path1.size() - 1] != '/' && path2[0] != '/')
         path += '/';
@@ -93,7 +97,7 @@ std::string combine_path(const std::string &path1, const std::string &path2, boo
     path += path2;
 
     // Remove double slashes and double dots
-    if (sanitize) {
+    if (simplify) {
         std::vector<std::string> parts = split(path, '/');
         std::vector<std::string> new_parts;
         for (std::vector<std::string>::iterator it = parts.begin();

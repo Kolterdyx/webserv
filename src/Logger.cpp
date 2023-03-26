@@ -29,7 +29,7 @@ void Logger::init() {
 
 	_patterns["%date%"] = "%date%";
 	_patterns["%time%"] = "%time%";
-	_patterns["%level%"] = std::to_string(_level);
+	_patterns["%level%"] = util::to_string(_level);
 	_patterns["%name%"] = _name;
 
 	_text_format["$red$"] = FG_RED;
@@ -124,8 +124,8 @@ std::string Logger::applyFormat(const std::string &message, bool color, int leve
 		_patterns["%message%"] = BG_RED + message;
 	}
 
-	_patterns["%date%"] = datetime("%Y-%m-%d");
-	_patterns["%time%"] = datetime("%H:%M:%S");
+	_patterns["%date%"] = util::datetime("%Y-%m-%d");
+	_patterns["%time%"] = util::datetime("%H:%M:%S");
 
 	for (std::map<int, std::string>::iterator it = _levelnames_color.begin(); it != _levelnames_color.end(); ++it) {
 		if (level < it->first) {

@@ -8,7 +8,6 @@
 
 namespace std {
 
-    int stoi(const std::string &str);
 
     template<typename T>
     std::ostream &operator<<(std::ostream &os, const std::vector<T> vector) {
@@ -26,8 +25,57 @@ namespace std {
         }
         return os;
     }
+}
 
-	/**
+namespace util {
+
+    /**
+     * @brief Converts a string to an integer. Here because stoi is not available in C++98
+     * @param str String to convert
+     * @return Integer
+     */
+    int stoi(const std::string &str) throw(std::invalid_argument);
+
+    /**
+     * @brief Splits a string into a vector of strings
+     * @param str String to split
+     * @param split_char Character to split on
+     * @return Vector of strings
+     */
+    std::vector<std::string> split(const std::string &str, char split_char);
+
+    /**
+     * @brief Removes all characters in chars from the beginning and end of str
+     * @param str String to trim
+     * @param chars Characters to remove
+     * @return Trimmed string
+     */
+    std::string trim(std::string str, std::string chars);
+
+    /**
+     * @brief Converts a string to lowercase
+     * @param str String to convert
+     * @return Lowercase string
+     */
+    std::string to_lower(const std::string &str);
+
+    /**
+     * @brief Returns the current date and/or time in the format specified by the format parameter. See 'man strftime' for more info.
+     * @param format Format of the date and time. See strftime for more info. Default is "%Y%m%dT%H%M%SZ". Not all formats are required.
+     * @return Current date and time
+     */
+    std::string datetime(const std::string &format = "%Y%m%dT%H%M%SZ");
+
+    /**
+     * @brief Combines two paths.
+     * @param path1 First path
+     * @param path2 Second path
+     * @param simplify If true, it will remove double slashes and interpret ".."
+     * @return Combined path (path1 + path2)
+     */
+    std::string combine_path(const std::string &path1, const std::string &path2, bool simplify = true);
+
+    /**
 	 * @brief Converts a given variable to a string using an std::stringstream. Added here because we can't have C++11
 	 * @tparam T
 	 * @param var variable to convert. If it's a class instance, it must have a << operator overload.
@@ -40,11 +88,5 @@ namespace std {
 		return ss.str();
 	}
 }
-
-std::vector<std::string> split(const std::string &str, char split_char);
-std::string trim(std::string str, std::string chars);
-std::string to_lower(const std::string &str);
-std::string datetime(const std::string &format = "%Y%m%dT%H%M%SZ");
-std::string combine_path(const std::string &path1, const std::string &path2, bool sanitize = true);
 
 #endif //UTILS_HPP

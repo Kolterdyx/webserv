@@ -75,7 +75,7 @@ void Response::setHeader(const std::string &key, const std::string &value) {
 
 void Response::setBody(const std::string &body) {
 	this->body = body;
-	headers["Content-Length"] = std::to_string(body.size());
+	headers["Content-Length"] = util::to_string(body.size());
 }
 
 void Response::setStatus(int status) {
@@ -85,7 +85,7 @@ void Response::setStatus(int status) {
 std::string Response::getHeader(const std::string &key) const {
 	// Case insensitive
 	for (std::map<std::string, std::string>::const_iterator it = headers.begin(); it != headers.end(); ++it) {
-		if (to_lower(it->first) == to_lower(key)) {
+		if (util::to_lower(it->first) == util::to_lower(key)) {
 			return it->second;
 		}
 	}
@@ -122,7 +122,7 @@ int Response::getStatus() const {
 }
 
 std::string Response::getStatusString() const {
-	return std::to_string(status) + " " + status_names[status];
+	return util::to_string(status) + " " + status_names[status];
 }
 
 void Response::addHeader(const std::string& key, const std::string& value) {

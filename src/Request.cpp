@@ -21,7 +21,7 @@ void Request::setHeader(const std::string &key, const std::string &value) {
 void Request::setBody(const std::string &body) {
 	this->body = body;
 	if (headers.find("Content-Length") != headers.end()) {
-		headers["Content-Length"] = std::to_string(body.size());
+		headers["Content-Length"] = util::to_string(body.size());
 	}
 }
 
@@ -33,7 +33,7 @@ std::string Request::getHeader(const std::string &key) {
 	// Case insensitive
 	for (std::map<std::string, std::string>::iterator it = headers.begin();
 		 it != headers.end(); ++it) {
-		if (to_lower(it->first) == to_lower(key)) {
+		if (util::to_lower(it->first) == util::to_lower(key)) {
 			return it->second;
 		}
 	}
@@ -48,7 +48,7 @@ std::string Request::getMethod() {
 	return method;
 }
 
-Request::Request(const std::string raw_request, sockaddr addr) {
+Request::Request(const std::string& raw_request, sockaddr addr) {
 	parse_http_request(raw_request);
 	char ip[INET_ADDRSTRLEN];
 	inet_ntop(AF_INET, &(((sockaddr_in *)&addr)->sin_addr), ip, INET_ADDRSTRLEN);
@@ -68,13 +68,13 @@ void Request::parse_header(const std::string &header_string) {
 		}
 		if (first_line) {
 			first_line = false;
-			method = trim(line.substr(0, line.find(" ")), " ");
-			path = trim(line.substr(line.find(" ") + 1, line.find("HTTP") - line.find(" ") - 1), " ");
-			version = trim(line.substr(line.find("HTTP") + 5), " ");
+			method = util::trim(line.substr(0, line.find(" ")), " ");
+			path = util::trim(line.substr(line.find(" ") + 1, line.find("HTTP") - line.find(" ") - 1), " ");
+			version = util::trim(line.substr(line.find("HTTP") + 5), " ");
 			continue;
 		}
 		key = line.substr(0, line.find(":"));
-		value = trim(line.substr(line.find(":") + 1), " ");
+		value = util::trim(line.substr(line.find(":") + 1), " ");
 		headers[key] = value;
 	}
 }
@@ -85,7 +85,7 @@ int Request::getBodySize() {
 	if (getHeader("Content-Length").empty()) {
 		return 0;
 	}
-	return std::stoi(getHeader("Content-Length"));
+	return util::stoi(getHeader("Content-Length"));
 }
 
 std::string Request::toString() const {

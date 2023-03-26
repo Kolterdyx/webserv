@@ -52,13 +52,13 @@ void XMLDocument::fromFile(const std::string &filename) {
 XMLElementVector XMLDocument::query(const std::string &query) const {
     XMLElementVector result;
 
-    std::vector<std::string> queries = split(query, ';');
+    std::vector<std::string> queries = util::split(query, ';');
 	std::string q;
 
     for (size_t i = 0; i < queries.size(); i++) {
-		q = trim(queries[i], " ");
+		q = util::trim(queries[i], " ");
 		if (q[0] != '/') {
-			throw XMLParseError("Query at position " + std::to_string(i) + " does not start with a slash. (/)");
+			throw XMLParseError("Query at position " + util::to_string(i) + " does not start with a slash. (/)");
 		}
         std::string selector = q.substr(1, q.size() - 1);
         XMLElementVector elements = root->query(selector);

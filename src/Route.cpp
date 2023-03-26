@@ -205,7 +205,7 @@ Route::Route(XMLElement *config, Logger &logger) : cgi_enabled(), redirect_enabl
 		}
 
 		try {
-			status = std::stoi((*it)->getAttribute("status"));
+			status = util::stoi((*it)->getAttribute("status"));
 		} catch (std::invalid_argument &e) {
 			logger.warn("Invalid error code. Ignoring error_page.");
 			continue;

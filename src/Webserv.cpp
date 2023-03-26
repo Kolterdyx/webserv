@@ -41,7 +41,7 @@ Webserver::Webserver(const XMLDocument &config) {
 
 	XMLElementVector serverConfigs = config.query("/server");
 
-	logger.log("Creating " + std::to_string(serverConfigs.size()) + " servers",
+	logger.log("Creating " + util::to_string(serverConfigs.size()) + " servers",
 			   9);
 	for (XMLElementVector::iterator it = serverConfigs.begin(); it != serverConfigs.end(); it++) {
 		XMLElementVector listens = (*it)->query("listen");
@@ -62,13 +62,13 @@ Webserver::Webserver(const XMLDocument &config) {
 			} else {
 				ip = (*listen)->getAttribute("ip");
 			}
-			int port = std::stoi((*listen)->getAttribute("port"));
+			int port = util::stoi((*listen)->getAttribute("port"));
 
 			if (!(*listen)->hasAttribute("port")) {
 				port = 80;
 			} else {
 				try {
-					port = std::stoi((*listen)->getAttribute("port"));
+					port = util::stoi((*listen)->getAttribute("port"));
 				} catch (std::invalid_argument &e) {
 					logger.error("Invalid port number. Ignoring server.");
 					continue;
@@ -91,7 +91,7 @@ Webserver::Webserver(const XMLDocument &config) {
 		this->servers.push_back(server);
 
 	}
-	logger.info("Created " + std::to_string(this->servers.size()) + " servers");
+	logger.info("Created " + util::to_string(this->servers.size()) + " servers");
 }
 
 bool Webserver::initServer(Server *server, XMLElement* element)
@@ -135,7 +135,7 @@ bool Webserver::initServer(Server *server, XMLElement* element)
 		}
 
 		try {
-			status = std::stoi((*it)->getAttribute("status"));
+			status = util::stoi((*it)->getAttribute("status"));
 		} catch (std::invalid_argument &e) {
 			logger.warn("Invalid error code. Ignoring error_page.");
 			continue;
