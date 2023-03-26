@@ -150,7 +150,7 @@ void Route::setRawErrorPage(int code, const std::string &content) {
 }
 
 void Route::setErrorPage(int code, const std::string &filepath) {
-	std::ifstream file(filepath);
+	std::ifstream file(filepath.c_str());
 	if (!file.good()) {
 		throw std::runtime_error("Error page file not found");
 	}
@@ -160,8 +160,12 @@ void Route::setErrorPage(int code, const std::string &filepath) {
 }
 
 void Route::removeMethod(const std::string &method) {
-	methods.erase(std::remove(methods.begin(), methods.end(), method),
-				  methods.end());
+    for (std::vector<std::string>::iterator it = methods.begin(); it != methods.end(); it++) {
+        if (*it == method) {
+            methods.erase(it);
+            return;
+        }
+    }
 }
 
 void Route::removeErrorPage(int code) {

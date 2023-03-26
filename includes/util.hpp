@@ -7,6 +7,9 @@
 #include <sstream>
 
 namespace std {
+
+    int stoi(const std::string &str);
+
     template<typename T>
     std::ostream &operator<<(std::ostream &os, const std::vector<T> vector) {
 		int i = 0;

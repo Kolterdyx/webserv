@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 #include <XML/XMLElement.hpp>
+#include "util.hpp"
 
 class Route {
 

@@ -323,7 +323,7 @@ Response Server::handle_get(const Request& request, const std::string& path) {
 		file_path = combine_path(file_path, this->routes["*"].getIndex(), true);
 	}
 	// Check if file exists
-	std::ifstream file(file_path);
+	std::ifstream file(file_path.c_str());
 	if (!file.good()) {
 		logger.error("File not found");
 		return Response(404);

@@ -1,4 +1,5 @@
 
+#include <cstring>
 #include "MimeTypes.hpp"
 
 std::string MimeTypes::getType(const std::string &extension) {

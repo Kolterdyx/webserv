@@ -26,9 +26,9 @@ private:
 
 	int sockets[1024];
 	struct sockaddr_in addresses[1024];
-	struct fd_set rfds;
-	struct fd_set wfds;
-	struct fd_set efds;
+	fd_set rfds;
+	fd_set wfds;
+	fd_set efds;
 
 	std::map<int, int> client_to_socket;
 	std::vector<int> clients;

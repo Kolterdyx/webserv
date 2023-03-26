@@ -84,7 +84,7 @@ Logger &Logger::operator=(const Logger &copy) {
 	_text_format = copy._text_format;
 
 	if (copy._file.is_open())
-		_file.open(_path, std::ios::out | std::ios::app);
+		_file.open(_path.c_str(), std::ios::out | std::ios::app);
 	return *this;
 }
 
@@ -162,7 +162,7 @@ void Logger::setLevel(int level) {
 
 void Logger::setPath(const std::string &path) {
 	_path = path;
-	_file.open(_path, std::ios::out | std::ios::app);
+	_file.open(_path.c_str(), std::ios::out | std::ios::app);
 }
 
 void Logger::setUseFile(bool useFile) {
