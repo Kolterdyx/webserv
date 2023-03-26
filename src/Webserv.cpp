@@ -1,4 +1,5 @@
 
+#include <netdb.h>
 #include "Webserver.hpp"
 
 void Webserver::run()
@@ -51,18 +52,24 @@ Webserver::Webserver(const XMLDocument &config) {
 		}
 		std::vector<std::pair<std::string, int> > listenPairs;
 		for (XMLElementVector::iterator listen = listens.begin(); listen != listens.end(); listen++) {
-			if (!(*listen)->hasAttribute("ip") &&
+			if (!(*listen)->hasAttribute("host") &&
 				!(*listen)->hasAttribute("port")) {
 				logger.error("Invalid listen directive. Ignoring server.");
 				continue;
 			}
 			std::string ip;
-			if (!(*listen)->hasAttribute("ip")) {
+			if (!(*listen)->hasAttribute("host")) {
 				ip = "0.0.0.0";
 			} else {
-				ip = (*listen)->getAttribute("ip");
+                std::string hostname = (*listen)->getAttribute("host");
+                struct hostent *host = gethostbyname(hostname.c_str());
+                if (host == NULL) {
+                    logger.error("Invalid host name. Ignoring server.");
+                    continue;
+                }
+				ip = inet_ntoa(*((struct in_addr *) host->h_addr));
 			}
-			int port = util::stoi((*listen)->getAttribute("port"));
+			int port;
 
 			if (!(*listen)->hasAttribute("port")) {
 				port = 80;
