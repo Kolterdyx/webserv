@@ -14,7 +14,6 @@ void Webserver::run()
 }
 
 Webserver::Webserver() {
-	logger = Logger("Webserver");
 }
 
 Webserver::Webserver(const Webserver &copy) {
@@ -25,7 +24,6 @@ Webserver &Webserver::operator=(const Webserver &copy) {
 	if (this != &copy) {
 		this->config = XMLDocument(copy.config);
 		this->servers = std::vector<Server *>(copy.servers);
-		logger = copy.logger;
 	}
 	return *this;
 }
@@ -37,7 +35,6 @@ Webserver::~Webserver() {
 }
 
 Webserver::Webserver(const XMLDocument &config) {
-	logger = Logger("Webserver");
 	this->config = config;
 
 	// Create servers
@@ -126,7 +123,7 @@ bool Webserver::initServer(Server *server, XMLElement* element)
 			logger.warn("Invalid route directive. Ignoring route.");
 			continue;
 		}
-		server->addRoute(Route(*it, server->getLogger()));
+		server->addRoute(Route(*it));
 	}
 
 	// Load error pages for the whole server

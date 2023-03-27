@@ -228,3 +228,6 @@ static std::map<std::string, std::string> initTextFormat() {
 std::map<int, std::string> Logger::_levelnames = initLevelNames();
 std::map<int, std::string> Logger::_levelnames_color = initLevelNamesColor();
 std::map<std::string, std::string> Logger::_text_format = initTextFormat();
+
+Logger logger("Global");
+

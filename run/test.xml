@@ -1,9 +1,11 @@
 <webserv>
     <server name="test">
         <listen host="localhost" port="8080"/>
-        <root>/home/kolterdyx/CLionProjects/webserv/run/data</root>
+        <root>run/site1/</root>
     </server>
     <server name="example">
-        <listen host="localhost" port="4242"/>
+        <listen host="0.0.0.0" port="4242"/>
+        <root>run/site2/</root>
     </server>
+    <log level="0">run/log</log>
 </webserv>

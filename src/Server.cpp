@@ -26,10 +26,6 @@ void Server::init() {
 
 	initDefaultErrorPages();
 
-	logger = Logger(name);
-
-	logger.setPath("logs/" + name + ".log");
-	logger.setUseFile(true);
 	logger.debug("Creating server");
 
 	// Listen on a given port and address for incoming connections.
@@ -84,7 +80,6 @@ void Server::init() {
 
 
 int Server::run() {
-	this->logger.setLevel(0);
 	for (int n = 0; n < (int) listenPairs.size() && n < 1024; n++) {
 		FD_SET(sockets[n], &rfds);
 //		FD_SET(sockets[n], &efds);
@@ -136,7 +131,7 @@ int Server::run() {
 			}
 		}
 	} else {
-//		logger.debug("No data within 100ms");
+//		logger.debug("No site1 within 100ms");
 	}
 
 	bool error = false;
@@ -285,6 +280,17 @@ const std::string &Server::getRootPath() const {
 }
 
 void Server::setRootPath(const std::string &rootPath) {
+    if (rootPath.empty()) {
+        logger.error("Root path cannot be empty");
+        return;
+    } else if (rootPath[rootPath.length() - 1] != '/') {
+        logger.error("Root path must end with a slash");
+        return;
+    } else if (rootPath[0] != '/') {
+        std::string absolutePathCwd = std::string(getcwd(NULL, 0));
+        root_path = util::combine_path(absolutePathCwd, rootPath, true);
+        return;
+    }
 	root_path = rootPath;
 }
 
@@ -298,10 +304,6 @@ void Server::setErrorPage(int status, const std::string& path) {
 
 void Server::setIndex(const std::string& index) {
 	this->routes["*"].setIndex(index);
-}
-
-Logger &Server::getLogger() {
-	return logger;
 }
 
 Response Server::handle_get(const Request& request, const std::string& path) {

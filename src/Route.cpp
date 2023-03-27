@@ -176,7 +176,7 @@ std::string Route::getErrorPage(int code) {
 	return error_pages[code];
 }
 
-Route::Route(XMLElement *config, Logger &logger) : cgi_enabled(), redirect_enabled(), autoindex_enabled(), directory_listing_enabled(), max_body_size(), upload_enabled() {
+Route::Route(XMLElement *config) : cgi_enabled(), redirect_enabled(), autoindex_enabled(), directory_listing_enabled(), max_body_size(), upload_enabled() {
 
 	XMLElementVector rootPaths = config->query("root");
 	XMLElementVector errorPages = config->query("error_page");
@@ -282,5 +282,6 @@ Route::Route(XMLElement *config, Logger &logger) : cgi_enabled(), redirect_enabl
 Route::Route()
 		: cgi_enabled(), redirect_enabled(), autoindex_enabled(),
 		  directory_listing_enabled(), max_body_size(), upload_enabled() {
+
 
 }

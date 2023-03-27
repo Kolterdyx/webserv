@@ -22,7 +22,7 @@ class Server {
 private:
 	std::vector<std::pair<std::string, int> > listenPairs;
 	std::string name;
-	Logger logger;
+//	Logger logger;
 
 	int sockets[1024];
 	struct sockaddr_in addresses[1024];

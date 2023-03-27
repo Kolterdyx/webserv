@@ -10,7 +10,7 @@ class Webserver {
 private:
 	XMLDocument config;
 
-	Logger logger;
+//	Logger logger;
 
 	std::vector<Server *> servers;
 

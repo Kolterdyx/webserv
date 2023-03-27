@@ -72,5 +72,5 @@ public:
 	unsigned int getLevel();
 };
 
-
+extern Logger logger;
 #endif //WEBSERV_LOGGER_HPP

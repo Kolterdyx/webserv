@@ -128,7 +128,6 @@ public:
 
 	Route();
 
-	Route(XMLElement *config, Logger &logger);
 };
 
 
