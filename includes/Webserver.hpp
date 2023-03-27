@@ -12,7 +12,7 @@ private:
 
 	Logger logger;
 
-	std::vector<Server> servers;
+	std::vector<Server *> servers;
 
 public:
 	Webserver();

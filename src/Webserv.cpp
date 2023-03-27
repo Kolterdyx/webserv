@@ -7,8 +7,8 @@ void Webserver::run()
 	logger.debug("Running webserver");
 
 	while (true) {
-		for (std::vector<Server>::iterator it = this->servers.begin(); it != this->servers.end(); it++) {
-			it->run();
+		for (std::vector<Server *>::iterator it = this->servers.begin(); it != this->servers.end(); it++) {
+			(*it)->run();
 		}
 	}
 }
@@ -24,14 +24,16 @@ Webserver::Webserver(const Webserver &copy) {
 Webserver &Webserver::operator=(const Webserver &copy) {
 	if (this != &copy) {
 		this->config = XMLDocument(copy.config);
-		this->servers = std::vector<Server>(copy.servers);
+		this->servers = std::vector<Server *>(copy.servers);
 		logger = copy.logger;
 	}
 	return *this;
 }
 
 Webserver::~Webserver() {
-
+    for (std::vector<Server *>::iterator it = this->servers.begin(); it != this->servers.end(); it++) {
+        delete *it;
+    }
 }
 
 Webserver::Webserver(const XMLDocument &config) {
@@ -90,8 +92,8 @@ Webserver::Webserver(const XMLDocument &config) {
 			name = (*it)->getAttribute("name");
 		}
 
-		Server server(listenPairs, name);
-		if (!initServer(&server, *it)) {
+		Server *server = new Server(listenPairs, name);
+		if (!initServer(server, *it)) {
 			continue;
 		}
 		logger.info("Created server with name '" + name + "'");
