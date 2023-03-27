@@ -110,9 +110,13 @@ std::string util::combine_path(const std::string &path1, const std::string &path
             }
         }
         path.clear();
+        int i = 0;
         for (std::vector<std::string>::iterator it = new_parts.begin();
              it != new_parts.end(); ++it) {
-            path += "/" + *it;
+            if (i++ > 0 || path1[0] == '/')
+                path += "/" + *it;
+            else
+                path += *it;
         }
     }
 
