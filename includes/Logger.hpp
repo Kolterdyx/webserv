@@ -22,10 +22,10 @@ private:
 	std::string _format;
 
 	std::map<std::string, std::string> _patterns;
-	std::map<std::string, std::string> _text_format;
+	static std::map<std::string, std::string> _text_format;
 
-	std::map<int, std::string> _levelnames_color;
-	std::map<int, std::string> _levelnames;
+	static std::map<int, std::string> _levelnames_color;
+	static std::map<int, std::string> _levelnames;
 
 
 	int _level;

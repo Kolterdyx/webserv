@@ -32,41 +32,6 @@ void Logger::init() {
 	_patterns["%level%"] = util::to_string(_level);
 	_patterns["%name%"] = _name;
 
-	_text_format["$red$"] = FG_RED;
-	_text_format["$green$"] = FG_GREEN;
-	_text_format["$yellow$"] = FG_YELLOW;
-	_text_format["$blue$"] = FG_BLUE;
-	_text_format["$magenta$"] = FG_MAGENTA;
-	_text_format["$cyan$"] = FG_CYAN;
-	_text_format["$white$"] = FG_WHITE;
-	_text_format["$reset$"] = RESET;
-	_text_format["$bold$"] = BOLD;
-	_text_format["$blink$"] = BLINK;
-	_text_format["$reverse$"] = REVERSE;
-	_text_format["$underline$"] = UNDERLINED;
-	_text_format["$black$"] = FG_BLACK;
-	_text_format["$gray$"] = FG_GRAY;
-	_text_format["$lightred$"] = FG_LIGHT_RED;
-	_text_format["$lightgreen$"] = FG_LIGHT_GREEN;
-	_text_format["$lightyellow$"] = FG_LIGHT_YELLOW;
-	_text_format["$lightblue$"] = FG_LIGHT_BLUE;
-	_text_format["$lightmagenta$"] = FG_LIGHT_MAGENTA;
-	_text_format["$lightcyan$"] = FG_LIGHT_CYAN;
-	_text_format["$lightwhite$"] = FG_LIGHT_WHITE;
-	_text_format["$reset$"] = RESET;
-	_text_format["$default$"] = FG_DEFAULT;
-
-	_levelnames[DEBUG] = "DEBUG";
-	_levelnames[INFO] = "INFO";
-	_levelnames[WARN] = "WARN";
-	_levelnames[ERROR] = "ERROR";
-	_levelnames[CRITICAL] = "CRITICAL";
-
-	_levelnames_color[DEBUG] = FG_BLUE + _levelnames[DEBUG] + RESET;
-	_levelnames_color[INFO] = FG_GREEN + _levelnames[INFO] + RESET;
-	_levelnames_color[WARN] = FG_LIGHT_RED + _levelnames[WARN] + RESET;
-	_levelnames_color[ERROR] = FG_RED + _levelnames[ERROR] + RESET;
-	_levelnames_color[CRITICAL] = FG_RED + _levelnames[CRITICAL] + RESET;
 }
 
 Logger::Logger(const Logger &copy) {
@@ -83,8 +48,6 @@ Logger &Logger::operator=(const Logger &copy) {
 	_levelnames_color = copy._levelnames_color;
 	_text_format = copy._text_format;
 
-	if (copy._file.is_open())
-		_file.open(_path.c_str(), std::ios::out | std::ios::app);
 	return *this;
 }
 
@@ -98,8 +61,11 @@ void Logger::print(const std::string &message, int level) {
 		return;
 	if (useStdout)
 		std::cout << applyFormat(message, true, level) << std::endl;
-	if (useFile)
-		_file << applyFormat(message, false, level) << std::endl;
+	if (useFile) {
+        _file.open(_path.c_str(), std::ios::out | std::ios::app);
+        _file << applyFormat(message, false, level) << std::endl;
+        _file.close();
+    }
 }
 
 void Logger::setFormat(const std::string &format) {
@@ -108,26 +74,27 @@ void Logger::setFormat(const std::string &format) {
 
 std::string Logger::applyFormat(const std::string &message, bool color, int level) {
 
-	if (level < INFO) {
-		_patterns["%message%"] = FG_GRAY + message;
-	}
-	else if (level < WARN) {
-		_patterns["%message%"] = message;
-	}
-	else if (level < ERROR) {
-		_patterns["%message%"] = FG_YELLOW + message;
-	}
-	else if (level < CRITICAL) {
-		_patterns["%message%"] = FG_RED + message;
-	}
-	else {
-		_patterns["%message%"] = BG_RED + message;
-	}
+    if (color) {
+        if (level < INFO) {
+            _patterns["%message%"] = FG_GRAY + message;
+        } else if (level < WARN) {
+            _patterns["%message%"] = message;
+        } else if (level < ERROR) {
+            _patterns["%message%"] = FG_YELLOW + message;
+        } else if (level < CRITICAL) {
+            _patterns["%message%"] = FG_RED + message;
+        } else {
+            _patterns["%message%"] = BG_RED + message;
+        }
+    } else {
+        _patterns["%message%"] = message;
+    }
 
 	_patterns["%date%"] = util::datetime("%Y-%m-%d");
 	_patterns["%time%"] = util::datetime("%H:%M:%S");
 
-	for (std::map<int, std::string>::iterator it = _levelnames_color.begin(); it != _levelnames_color.end(); ++it) {
+    std::map<int, std::string> levelnames = color ? _levelnames_color : _levelnames;
+	for (std::map<int, std::string>::iterator it = levelnames.begin(); it != levelnames.end(); ++it) {
 		if (level < it->first) {
 			break;
 		}
@@ -136,14 +103,18 @@ std::string Logger::applyFormat(const std::string &message, bool color, int leve
 
 	std::string formatted = _format;
 	std::string::size_type pos = 0;
-	for (std::map<std::string, std::string>::iterator it = _text_format.begin(); it != _text_format.end(); ++it) {
+
+    // Replace patterns
+	for (std::map<std::string, std::string>::iterator it = _patterns.begin(); it != _patterns.end(); ++it) {
 		pos = formatted.find(it->first);
 		while (pos != std::string::npos) {
 			formatted.replace(pos, it->first.length(), it->second);
 			pos = formatted.find(it->first);
 		}
 	}
-	for (std::map<std::string, std::string>::iterator it = _patterns.begin(); it != _patterns.end(); ++it) {
+
+    // Replace text format patterns
+	for (std::map<std::string, std::string>::iterator it = _text_format.begin(); it != _text_format.end(); ++it) {
 		pos = formatted.find(it->first);
 		while (pos != std::string::npos) {
 			if (color)
@@ -153,7 +124,7 @@ std::string Logger::applyFormat(const std::string &message, bool color, int leve
 			pos = formatted.find(it->first);
 		}
 	}
-	return formatted + RESET;
+	return formatted + (color ? RESET : "");
 }
 
 void Logger::setLevel(int level) {
@@ -162,7 +133,6 @@ void Logger::setLevel(int level) {
 
 void Logger::setPath(const std::string &path) {
 	_path = path;
-	_file.open(_path.c_str(), std::ios::out | std::ios::app);
 }
 
 void Logger::setUseFile(bool useFile) {
@@ -205,3 +175,56 @@ void Logger::critical(const std::string &message) {
 unsigned int Logger::getLevel() {
 	return _level;
 }
+
+static std::map<int, std::string> initLevelNames() {
+    std::map<int, std::string> levelnames;
+    levelnames[Logger::DEBUG] = "DEBUG";
+    levelnames[Logger::INFO] = "INFO";
+    levelnames[Logger::WARN] = "WARN";
+    levelnames[Logger::ERROR] = "ERROR";
+    levelnames[Logger::CRITICAL] = "CRITICAL";
+    return levelnames;
+}
+
+static std::map<int, std::string> initLevelNamesColor() {
+    std::map<int, std::string> levelnames = initLevelNames();
+    std::map<int, std::string> levelnamescolor;
+    levelnamescolor[Logger::DEBUG] = FG_GRAY + levelnames[Logger::DEBUG] + RESET;
+    levelnamescolor[Logger::INFO] = FG_WHITE + levelnames[Logger::INFO] + RESET;
+    levelnamescolor[Logger::WARN] = FG_YELLOW + levelnames[Logger::WARN] + RESET;
+    levelnamescolor[Logger::ERROR] = FG_RED + levelnames[Logger::ERROR] + RESET;
+    levelnamescolor[Logger::CRITICAL] = BG_RED + levelnames[Logger::CRITICAL] + RESET;
+    return levelnamescolor;
+}
+
+static std::map<std::string, std::string> initTextFormat() {
+    std::map<std::string, std::string> text_format;
+    text_format["$red$"] = FG_RED;
+    text_format["$green$"] = FG_GREEN;
+    text_format["$yellow$"] = FG_YELLOW;
+    text_format["$blue$"] = FG_BLUE;
+    text_format["$magenta$"] = FG_MAGENTA;
+    text_format["$cyan$"] = FG_CYAN;
+    text_format["$white$"] = FG_WHITE;
+    text_format["$reset$"] = RESET;
+    text_format["$bold$"] = BOLD;
+    text_format["$blink$"] = BLINK;
+    text_format["$reverse$"] = REVERSE;
+    text_format["$underline$"] = UNDERLINED;
+    text_format["$black$"] = FG_BLACK;
+    text_format["$gray$"] = FG_GRAY;
+    text_format["$lightred$"] = FG_LIGHT_RED;
+    text_format["$lightgreen$"] = FG_LIGHT_GREEN;
+    text_format["$lightyellow$"] = FG_LIGHT_YELLOW;
+    text_format["$lightblue$"] = FG_LIGHT_BLUE;
+    text_format["$lightmagenta$"] = FG_LIGHT_MAGENTA;
+    text_format["$lightcyan$"] = FG_LIGHT_CYAN;
+    text_format["$lightwhite$"] = FG_LIGHT_WHITE;
+    text_format["$reset$"] = RESET;
+    text_format["$default$"] = FG_DEFAULT;
+    return text_format;
+}
+
+std::map<int, std::string> Logger::_levelnames = initLevelNames();
+std::map<int, std::string> Logger::_levelnames_color = initLevelNamesColor();
+std::map<std::string, std::string> Logger::_text_format = initTextFormat();
