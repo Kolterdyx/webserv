@@ -87,6 +87,13 @@ namespace util {
 		ss << var;
 		return ss.str();
 	}
+
+	/**
+	 * @brief Returns whether the given path is a file or a directory. Should be cross-platform.
+	 * @param path The path to check.
+	 * @return true if the path is a directory, false otherwise.
+	 */
+	bool is_dir(const std::string &path);
 }
 
 #endif //UTILS_HPP

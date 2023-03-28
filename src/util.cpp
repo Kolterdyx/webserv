@@ -122,3 +122,9 @@ std::string util::combine_path(const std::string &path1, const std::string &path
 
     return path;
 }
+
+
+bool util::is_dir(const std::string &path) {
+
+	return false;
+}

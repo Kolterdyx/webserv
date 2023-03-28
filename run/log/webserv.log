@@ -1,0 +1,44 @@
+[2023-03-28 11:55:03] [Global] [DEBUG] Creating 1 servers
+[2023-03-28 11:55:03] [Global] [DEBUG] Creating server
+[2023-03-28 11:55:03] [Global] [DEBUG] Index page: index.html
+[2023-03-28 11:55:03] [Global] [INFO] Created server with name 'test'
+[2023-03-28 11:55:03] [Global] [INFO] Created 1 servers
+[2023-03-28 11:55:03] [Global] [DEBUG] Running webserver
+[2023-03-28 11:55:22] [Global] [DEBUG] Accepted connection
+[2023-03-28 11:55:22] [Global] [DEBUG] Client disconnected
+[2023-03-28 11:55:22] [Global] [DEBUG] Request: GET /
+[2023-03-28 11:55:22] [Global] [DEBUG] File path: /Users/cigarcia/Documents/Projects/webserv/run/site1
+[2023-03-28 11:55:22] [Global] [DEBUG] File path if is dir: /Users/cigarcia/Documents/Projects/webserv/run/site1/index.html
+[2023-03-28 11:55:22] [Global] [DEBUG] index.html
+[2023-03-28 11:55:22] [Global] [DEBUG] Response raw: HTTP/1.1 200 OK text/html
+Connection: close
+Content-Length: 91
+Content-Type: text/html
+Date: Tue, 28 Mar 2023 11:55:22 CEST
+Server: webserver
+
+<html>
+
+<body>
+    <p>Hello world</p>
+
+    <a href="/test">test page</a>
+
+</body>
+
+</html>
+
+[2023-03-28 11:55:22] [Global] [DEBUG] Response: 200 OK
+[2023-03-28 11:55:22] [Global] [DEBUG] Accepted connection
+[2023-03-28 11:55:28] [Global] [DEBUG] Client disconnected
+[2023-03-28 11:55:28] [Global] [ERROR] Empty request
+[2023-03-28 11:55:28] [Global] [DEBUG] Response raw: HTTP/1.1 400 Bad Request text/html
+Content-Length: 54
+Content-Type: text/html
+
+<html>
+<body>
+<h1>400 Bad Request</h1>
+</body>
+</html>
+[2023-03-28 11:55:28] [Global] [DEBUG] Response: 400 Bad Request

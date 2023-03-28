@@ -316,14 +316,17 @@ Response Server::handle_get(const Request& request, const std::string& path) {
 		logger.error("Invalid path");
 		return Response(403);
 	}
-	struct stat statbuf;
+	struct stat statbuf = {};
 	if (stat(file_path.c_str(), &statbuf) != 0) {
 		logger.error("File not found");
 		return Response(404);
 	}
 	if (S_ISDIR(statbuf.st_mode)) {
 		file_path = util::combine_path(file_path, this->routes["*"].getIndex(), true);
+		logger.debug("File path if is dir: " + file_path);
+		logger.debug(this->routes["*"].getIndex());
 	}
+
 	// Check if file exists
 	std::ifstream file(file_path.c_str());
 	if (!file.good()) {

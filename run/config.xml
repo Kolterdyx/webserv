@@ -1,31 +1,21 @@
 <webserv>
     <server name="test">
         <client_max_body_size>100000000</client_max_body_size>
-        <root>/var/www</root>
+        <root>site1/</root>
         <index>index.html</index>
-        <error_page status="404" path="path/to/404.html"/>
-        <error_page status="500" path="path/to/50x.html"/>
-        <error_page status="501" path="path/to/50x.html"/>
-        <error_page status="502" path="path/to/50x.html"/>
-        <directory_listing enabled="false"/>
-        <route path="/somepath">
-            <root>/var/www/another/path</root>
-            <directory_listing enabled="false">directories.html</directory_listing>
-            <index>not_the_default.html</index>
-        </route>
-        <route path="/someotherpath">
-            <redirect code="301" path="path/to/redirect.html">http://localhost:8080/</redirect>
-        </route>
-        <route path="/dirlist">
-            <root>/var/www/mydir</root>
-            <directory_listing enabled="true">directories.html</directory_listing>
-        </route>
-        <route path="/usecgi">
-            <cgi enabled="true" path="/usr/bin/php" ext=".php"/>
-            <root>/var/www/mydir</root>
-            <index>index.php</index>
-        </route>
+<!--        <error_page status="404" path="path/to/404.html"/>-->
+<!--        <error_page status="500" path="path/to/50x.html"/>-->
+<!--        <error_page status="501" path="path/to/50x.html"/>-->
+<!--        <error_page status="502" path="path/to/50x.html"/>-->
+<!--        <directory_listing enabled="false"/>-->
+<!--        <route path="/somepath">-->
+<!--            <root>/var/www/another/path</root>-->
+<!--            <directory_listing enabled="false">directories.html</directory_listing>-->
+<!--            <index>not_the_default.html</index>-->
+<!--        </route>-->
+<!--        <route path="/someotherpath">-->1-->
         <listen host="localhost" port="8080"/>
         <listen host="0.0.0.0" port="7070"/>
     </server>
+    <log level="0">log</log>
 </webserv>

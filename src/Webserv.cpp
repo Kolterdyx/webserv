@@ -164,6 +164,9 @@ bool Webserver::initServer(Server *server, XMLElement* element)
 	else if (indexFiles.size() > 1) {
 		logger.warn("Multiple index directives found. Using first one.");
 		index = indexFiles[0]->getContent();
+	} else {
+		index = indexFiles[0]->getContent();
+		logger.debug("Index page: " + index);
 	}
 
 	// Load cgi stuff
