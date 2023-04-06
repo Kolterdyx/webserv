@@ -76,6 +76,8 @@ public:
 	Response handle_post(const Request& request, const std::string& path);
 
 	Response handle_delete(const Request& request, const std::string& path);
+
+	std::string getCgiPath(const std::string &file_path);
 };
 
 

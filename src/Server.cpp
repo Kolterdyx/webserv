@@ -338,6 +338,9 @@ Response Server::handle_get(const Request& request, const std::string& path) {
 	while (std::getline(file, line, '\n')) {
 		file_content += line + "\n";
 	}
+
+	std::string cgiBinPath = getCgiPath(file_path);
+	std::cout << "Cgi path: " << cgiBinPath << std::endl;
 	response.setBody(file_content);
 	std::string content_type = MimeTypes::getType(file_path);
 	response.addHeader("Content-Type", content_type);
@@ -359,4 +362,19 @@ Response Server::handle_delete(const Request& request, const std::string& path) 
 	UNUSED(path);
 
 	return response;
+}
+
+// Return the path of the cgi binary or an empty string
+std::string Server::getCgiPath(const std::string &file_path) {
+	std::string::size_type n = file_path.rfind(".");
+	if (n == std::string::npos)
+        return "";
+	std::string extension = file_path.substr(n);
+
+	std::map<std::string, Route>::iterator it = routes.begin();
+	for (; it != routes.end(); it++) {
+		if (it->second.getCgiExtension() == extension)
+			return it->second.getCgiBinPath();
+	}
+	return "";
 }
