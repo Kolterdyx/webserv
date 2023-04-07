@@ -128,3 +128,45 @@ std::string Response::getStatusString() const {
 void Response::addHeader(const std::string& key, const std::string& value) {
 	setHeader(key, value);
 }
+
+void Response::parse_http_response(std::string response) {
+	std::string header = response.substr(0, response.find("\r\n\r\n"));
+	if (response.find("\r\n\r\n") + 4 >= response.size()) {
+		setBody("");
+	} else {
+		std::string body = response.substr(response.find("\r\n\r\n") + 4);
+		setBody(body);
+	}
+	parse_header(header);
+}
+
+void Response::parse_header(const std::string &header_string) {
+
+	std::stringstream ss(header_string);
+	std::string line;
+	std::string key;
+	std::string value;
+	bool first_line = true;
+	while(std::getline(ss, line, '\n')) {
+		if (line.empty()) {
+			break;
+		}
+		std::cout << "Line: " << line << std::endl;
+		if (first_line) {
+			first_line = false;
+			int pos = line.find(" ");
+			version = util::trim(line.substr(0, pos), " ");
+			std::cout << "Version: " << version << "|\n";
+			std::string s_status = util::trim(line.substr(pos + 1, line.find(" ", pos + 1) - pos - 1), " ");
+			try {
+				status = util::stoi(s_status);
+			} catch (std::invalid_argument &e) {
+				logger.warn("Invalid status code.");
+			}
+			continue;
+		}
+		key = line.substr(0, line.find(":"));
+		value = util::trim(line.substr(line.find(":") + 1), " ");
+		headers[key] = value;
+	}
+}
