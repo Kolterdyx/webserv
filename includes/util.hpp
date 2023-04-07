@@ -6,6 +6,17 @@
 #include <iostream>
 #include <sstream>
 
+// For executeCgi
+#include <cstring>
+#include <cstdio>
+#include <cstdlib>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include "Request.hpp"
+class Request;
+#define CGI_BUFSIZE 20
+
 namespace std {
 
 
@@ -94,6 +105,9 @@ namespace util {
 	 * @return true if the path is a directory, false otherwise.
 	 */
 	bool is_dir(const std::string &path);
+
+    // TODO: maybe should be in Request.hpp or in an new class
+    std::string executeCgi(const Request &request, const std::string &cgiBinPath, std::string file_content);
 }
 
 #endif //UTILS_HPP

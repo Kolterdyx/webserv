@@ -7,7 +7,7 @@ std::string MimeTypes::getType(const std::string &extension) {
 	if (type) {
 		return std::string(type);
 	}
-	return std::string("application/octet-stream");
+	return std::string("text/plain");
 }
 
 const char* MimeTypes::getType(const char * extension)  {

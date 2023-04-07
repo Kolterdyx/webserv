@@ -238,6 +238,8 @@ Response Server::handle_request(Request request) {
 		response = handle_post(request, path);
 	} else if (request.getMethod() == "DELETE") {
 		response = handle_delete(request, path);
+	} else {
+		response.setStatus(405);
 	}
 
 
@@ -340,8 +342,16 @@ Response Server::handle_get(const Request& request, const std::string& path) {
 	}
 
 	std::string cgiBinPath = getCgiPath(file_path);
-	std::cout << "Cgi path: " << cgiBinPath << std::endl;
+	if (cgiBinPath.size()) {
+		file_content = util::executeCgi(request, cgiBinPath, file_content);
+		if (file_content.find("\r\n\r\n") + 4 < file_content.size()) {
+			file_content = file_content.substr(file_content.find("\r\n\r\n") + 4);
+		}
+		// response.parse_http_response(file_content);
+		// return response;
+	}
 	response.setBody(file_content);
+
 	std::string content_type = MimeTypes::getType(file_path);
 	response.addHeader("Content-Type", content_type);
 
@@ -349,7 +359,7 @@ Response Server::handle_get(const Request& request, const std::string& path) {
 }
 
 Response Server::handle_post(const Request& request, const std::string& path) {
-	Response response(200);
+	Response response(405);
 	UNUSED(request);
 	UNUSED(path);
 
@@ -357,7 +367,7 @@ Response Server::handle_post(const Request& request, const std::string& path) {
 }
 
 Response Server::handle_delete(const Request& request, const std::string& path) {
-	Response response(200);
+	Response response(405);
 	UNUSED(request);
 	UNUSED(path);
 
