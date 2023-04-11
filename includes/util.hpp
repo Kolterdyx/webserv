@@ -94,6 +94,9 @@ namespace util {
 	 * @return true if the path is a directory, false otherwise.
 	 */
 	bool is_dir(const std::string &path);
+
+	bool path_exists(const std::string& path);
+
 }
 
 #endif //UTILS_HPP

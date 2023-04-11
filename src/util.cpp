@@ -1,3 +1,4 @@
+#include <sys/stat.h>
 #include "util.hpp"
 
 int util::stoi(const std::string &s) throw (std::invalid_argument) {
@@ -126,5 +127,14 @@ std::string util::combine_path(const std::string &path1, const std::string &path
 
 bool util::is_dir(const std::string &path) {
 
+	struct stat st = {};
+	if (path_exists(path)) {
+		return S_ISDIR(st.st_mode);
+	}
 	return false;
+}
+
+bool util::path_exists(const std::string& path) {
+	struct stat st = {};
+	return stat(path.c_str(), &st) == 0;
 }
