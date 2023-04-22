@@ -142,85 +142,71 @@ std::string util::executeCgi(const Request &request, const std::string &cgiBinPa
     // TODO: hacer algo como esto https://github.com/cclaude42/webserv/blob/master/srcs/cgi/CgiHandler.cpp
     (void)request;
     char **env = new char*[4];
-    std::string var = "REQUEST_METHOD=GET";
-    env[0] = new char[var.size() + 1];
-    env[0] = strcpy(env[0], (const char*)var.c_str());
-    var = "SERVER_PROTOCOL=HTTP/1.1";
-    env[1] = new char[var.size() + 1];
-    env[1] = strcpy(env[1], (const char*)var.c_str());
-    var = "PATH_INFO=hola";
-    env[2] = new char[var.size() + 1];
-    env[2] = strcpy(env[2], (const char*)var.c_str());
+    env[0] = strdup("REQUEST_METHOD=GET");
+    env[1] = strdup("SERVER_PROTOCOL=HTTP/1.1");
+    env[2] = strdup("PATH_INFO=hola");
     env[3] = NULL;
 
     pid_t		pid;
-	int			saveStdin;
-	int			saveStdout;
-	std::string	newBody;
+    std::string	newBody;
+    int 		ret = 1;
+    int         pipeIn[2];
+    int         pipeOut[2];
 
-    // SAVING STDIN AND STDOUT IN ORDER TO TURN THEM BACK TO NORMAL LATER
-	saveStdin = dup(STDIN_FILENO);
-	saveStdout = dup(STDOUT_FILENO);
+    if (pipe(pipeIn) || pipe(pipeOut))
+    {
+        std::cerr << "Pipe crashed." << std::endl;
+        return ("Status: 500\r\n\r\n");
+    }
 
-	FILE	*fIn = tmpfile();
-	FILE	*fOut = tmpfile();
-	long	fdIn = fileno(fIn);
-	long	fdOut = fileno(fOut);
-	int		ret = 1;
-
-	write(fdIn, file_content.c_str(), file_content.size());
-	lseek(fdIn, 0, SEEK_SET);
+    write(pipeIn[1], file_content.c_str(), file_content.size());
+    close(pipeIn[1]);
 
 	pid = fork();
+	pid = fork();
 
-	if (pid == -1)
-	{
-		std::cerr << "Fork crashed." << std::endl;
-		return ("Status: 500\r\n\r\n");
-	}
-	else if (!pid)
-	{
-		char *argv[2] = {0};
+    pid = fork();
+
+    if (pid == -1)
+    {
+        std::cerr << "Fork crashed." << std::endl;
+        return ("Status: 500\r\n\r\n");
+    }
+    else if (!pid)
+    {
+        char *argv[2] = {0};
         argv[0] = new char[cgiBinPath.size() + 1];
         strcpy(argv[0], cgiBinPath.c_str());
 
-		dup2(fdIn, STDIN_FILENO);
-		dup2(fdOut, STDOUT_FILENO);
-		execve(cgiBinPath.c_str(), argv, env);
-		std::cerr << "Execve crashed." << std::endl;
-		write(STDOUT_FILENO, "Status: 500\r\n\r\n", 15);
-	}
-	else
-	{
-		char	buffer[CGI_BUFSIZE] = {0};
+        dup2(pipeIn[0], STDIN_FILENO);
+        dup2(pipeOut[1], STDOUT_FILENO);
+        execve(cgiBinPath.c_str(), argv, env);
+        std::cerr << "Execve crashed." << std::endl;
+        write(STDOUT_FILENO, "Status: 500\r\n\r\n", 15);
+        exit(-1);
+    }
+    else
+    {
+        char	buffer[CGI_BUFSIZE] = {0};
 
-		waitpid(-1, NULL, 0);
-		lseek(fdOut, 0, SEEK_SET);
+        waitpid(-1, NULL, 0);
+        close(pipeIn[0]);
+        close(pipeOut[1]);
 
-		ret = 1;
-		while (ret > 0)
-		{
-			memset(buffer, 0, CGI_BUFSIZE);
-			ret = read(fdOut, buffer, CGI_BUFSIZE - 1);
-			newBody += buffer;
-		}
-	}
+        ret = 1;
+        while (ret > 0)
+        {
+            memset(buffer, 0, CGI_BUFSIZE);
+            ret = read(pipeOut[0], buffer, CGI_BUFSIZE - 1);
+            newBody += buffer;
+        }
+    }
 
-	dup2(saveStdin, STDIN_FILENO);
-	dup2(saveStdout, STDOUT_FILENO);
-	fclose(fIn);
-	fclose(fOut);
-	close(fdIn);
-	close(fdOut);
-	close(saveStdin);
-	close(saveStdout);
+    close(pipeOut[0]);
 
-	for (size_t i = 0; env[i]; i++)
-		delete[] env[i];
-	delete[] env;
+    for (size_t i = 0; env[i]; i++)
+        delete[] env[i];
+    delete[] env;
 
-	if (!pid)
-		exit(0);
-
-	return (newBody);
+    return (newBody);
 }
