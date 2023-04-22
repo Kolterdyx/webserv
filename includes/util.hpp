@@ -108,6 +108,8 @@ namespace util {
 
     // TODO: maybe should be in Request.hpp or in an new class
     std::string executeCgi(const Request &request, const std::string &cgiBinPath, std::string file_content);
+	bool path_exists(const std::string& path);
+
 }
 
 #endif //UTILS_HPP

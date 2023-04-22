@@ -1,11 +1,11 @@
 <webserv>
     <server name="test">
-        <listen host="localhost" port="8080"/>
-        <root>run/site1/</root>
+        <listen host="0.0.0.0" port="8080"/>
+        <root>site1/</root>
     </server>
     <server name="example">
         <listen host="0.0.0.0" port="4242"/>
-        <root>run/site2/</root>
+        <root>template/</root>
     </server>
-    <log level="0">run/log</log>
+    <log level="1">run/log</log>
 </webserv>
