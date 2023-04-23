@@ -244,6 +244,8 @@ Response Server::handle_request(Request request) {
 		response = handle_post(request, path);
 	} else if (request.getMethod() == "DELETE") {
 		response = handle_delete(request, path);
+	} else if (request.getMethod() == "PUT") {
+		response = handle_put(request, path);
 	} else {
 		response.setStatus(405);
 	}
@@ -374,6 +376,14 @@ Response Server::handle_post(const Request& request, const std::string& path) {
 
 Response Server::handle_delete(const Request& request, const std::string& path) {
 	Response response(405);
+	UNUSED(request);
+	UNUSED(path);
+
+	return response;
+}
+
+Response Server::handle_put(const Request& request, const std::string& path) {
+	Response response(201);
 	UNUSED(request);
 	UNUSED(path);
 
