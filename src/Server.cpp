@@ -67,19 +67,18 @@ void Server::init() {
 //		logger.info("Listening on " + listenPairs[i].first + ":" +
 //					std::to_string(listenPairs[i].second));
 
-		int flags = fcntl(sockets[i], F_SETFL, O_NONBLOCK);
+		int flags = fcntl(sockets[i], F_SETFL, fcntl(sockets[i], F_GETFL) | O_NONBLOCK);
 		if (flags < 0) {
 			logger.error("Failed to set socket to non-blocking");
 			return;
 		}
 	}
-	FD_ZERO(&rfds);
-	FD_ZERO(&wfds);
-//	FD_ZERO(&efds);
 }
 
 
 int Server::run() {
+	FD_ZERO(&rfds);
+	FD_ZERO(&wfds);
 	for (int n = 0; n < (int) listenPairs.size() && n < 1024; n++) {
 		FD_SET(sockets[n], &rfds);
 //		FD_SET(sockets[n], &efds);
@@ -111,7 +110,7 @@ int Server::run() {
 				}
 				client_addresses[new_socket] = address;
 				logger.debug("Accepted connection");
-				int flags = fcntl(new_socket, F_SETFL, O_NONBLOCK);
+				int flags = fcntl(new_socket, F_SETFL, fcntl(new_socket, F_GETFL) | O_NONBLOCK);
 				if (flags < 0) {
 					logger.error("Failed to set socket to non-blocking");
 					return -1;
@@ -147,25 +146,32 @@ int Server::run() {
 		}
 		error = false;
 		if (FD_ISSET(client, &rfds)) {
-			char buffer[READ_BUFFER_SIZE] = {0};
-			ssize_t valread = recv(client, buffer, READ_BUFFER_SIZE, 0);
+			char buffer[READ_BUFFER_SIZE + 1] = {0};
+			ssize_t valread = 1;
 
-			std::stringstream ss;
+			std::string req;
 			// Read until we get an error or the client disconnects
-			while (valread >= READ_BUFFER_SIZE) {
-				ss << std::string(buffer);
+			while (valread > 0) {
 				valread = recv(client, buffer, READ_BUFFER_SIZE, 0);
+				// Non-blocking fds send a 'Try again' error when there is still nothing in the buffer
+				if (valread < 0 && errno == EAGAIN) {
+					valread = 1;
+					usleep(1000);
+					continue;
+				}
+				req += buffer;
+				memset(buffer, 0, READ_BUFFER_SIZE + 1);
+				// TODO: se lee por trocitos, si justo lee los 2 saltos de linea entre el header
+				// y el body de la request, para. Habría que mirar el tamaño del body
+				if (req.size() > 4 && req.substr(req.size() - 4) == "\r\n\r\n")
+					break;
 			}
 
 			if (valread < 0) {
-				// These two lines stop the stream buffer from being corrupted
-				// for some reason. I don't know why.
-				util::to_string(client);
-				util::to_string(sock);
 				// This is needed to not panic and return 400 for anything at
 				// random.
 				error = true;
-			} else if (valread < READ_BUFFER_SIZE) {
+			} else {
 				logger.debug("Client disconnected");
 				// Remove client from map
 				clients.erase(clients.begin() + i);
@@ -173,7 +179,7 @@ int Server::run() {
 				i--;
 			}
 			if (!error) {
-				Response response = getResponse(ss.str(), 0);
+				Response response = getResponse(req, 0);
 				std::string responsestr = response.toString();
 				logger.log("Response: " + response.getStatusString(), 9);
 //				logger.debug("Sending response: " + responsestr);

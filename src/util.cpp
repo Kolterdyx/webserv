@@ -159,11 +159,9 @@ std::string util::executeCgi(const Request &request, const std::string &cgiBinPa
         return ("Status: 500\r\n\r\n");
     }
 
-    write(pipeIn[1], file_content.c_str(), file_content.size());
+    if(write(pipeIn[1], file_content.c_str(), file_content.size()) < 0)
+        return ("Status: 500\r\n\r\n");
     close(pipeIn[1]);
-
-	pid = fork();
-	pid = fork();
 
     pid = fork();
 
@@ -182,7 +180,8 @@ std::string util::executeCgi(const Request &request, const std::string &cgiBinPa
         dup2(pipeOut[1], STDOUT_FILENO);
         execve(cgiBinPath.c_str(), argv, env);
         std::cerr << "Execve crashed." << std::endl;
-        write(STDOUT_FILENO, "Status: 500\r\n\r\n", 15);
+        if (write(STDOUT_FILENO, "Status: 500\r\n\r\n", 15) < 0)
+            return ("Status: 500\r\n\r\n");
         exit(-1);
     }
     else
@@ -205,7 +204,7 @@ std::string util::executeCgi(const Request &request, const std::string &cgiBinPa
     close(pipeOut[0]);
 
     for (size_t i = 0; env[i]; i++)
-        delete[] env[i];
+        free(env[i]);
     delete[] env;
 
     return (newBody);

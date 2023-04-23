@@ -1,7 +1,7 @@
 <webserv>
     <server name="test">
         <client_max_body_size>100000000</client_max_body_size>
-        <root>site1/</root>
+        <root>run/site1/</root>
         <index>index.html</index>
 <!--        <error_page status="404" path="path/to/404.html"/>-->
 <!--        <error_page status="500" path="path/to/50x.html"/>-->

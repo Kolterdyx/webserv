@@ -15,7 +15,7 @@
 #include "MimeTypes.hpp"
 #include "Route.hpp"
 
-#define READ_BUFFER_SIZE 8
+#define READ_BUFFER_SIZE 1024
 
 class Server {
 
