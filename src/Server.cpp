@@ -33,45 +33,8 @@ void Server::init() {
 	// We can use run() to wait for incoming connections.
 
 	for (int i = 0; i < (int) listenPairs.size() && i < 1024; i++) {
-		std::string ip = listenPairs[i].first;
-		int port = listenPairs[i].second;
-		int opt = 1;
-
-		// Creating socket file descriptor
-		if ((sockets[i] = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-			logger.error("Failed to create socket");
-			return;
-		}
-
-		if (setsockopt(sockets[i], SOL_SOCKET, SO_REUSEADDR, &opt,
-					   sizeof(opt))) {
-			logger.error("Failed to set socket options");
-			return;
-		}
-
-		addresses[i].sin_family = AF_INET;
-		addresses[i].sin_addr.s_addr = inet_addr(ip.c_str());
-		addresses[i].sin_port = htons(port);
-
-		if (bind(sockets[i], (struct sockaddr *) &addresses[i],
-				 sizeof(addresses[i])) < 0) {
-			logger.error("Failed to bind socket");
-			return;
-		}
-
-		if (listen(sockets[i], 3) < 0) {
-			logger.error("Failed to listen on socket");
-			return;
-		}
-		//TODO: This needs to be somewhere else
-//		logger.info("Listening on " + listenPairs[i].first + ":" +
-//					std::to_string(listenPairs[i].second));
-
-		int flags = fcntl(sockets[i], F_SETFL, fcntl(sockets[i], F_GETFL) | O_NONBLOCK);
-		if (flags < 0) {
-			logger.error("Failed to set socket to non-blocking");
-			return;
-		}
+		listeners.push_back(Listener(listenPairs[i].first, listenPairs[i].second));
+		sockets[i] = listeners[i].getSocket();
 	}
 }
 
@@ -103,8 +66,7 @@ int Server::run() {
 			if (FD_ISSET(sockets[n], &rfds)) {
 				int new_socket;
 				struct sockaddr address;
-				socklen_t addrlen = sizeof(address);
-				if ((new_socket = accept(sockets[n], &address, &addrlen)) < 0) {
+				if ((new_socket = listeners[n].newConnection(&address)) < 0) {
 					logger.error("Failed to accept connection");
 					return -1;
 				}
@@ -119,7 +81,6 @@ int Server::run() {
 //				FD_SET(new_socket, &efds);
 				FD_SET(new_socket, &wfds);
 				client_to_socket[new_socket] = sockets[n];
-				clients.push_back(new_socket);
 				if (new_socket > maxfd) {
 					maxfd = new_socket;
 				}
@@ -134,13 +95,10 @@ int Server::run() {
 	}
 
 	bool error = false;
-	for (int i = 0; i < (int) clients.size(); i++) {
-
-		int client = clients[i];
-		if (client_to_socket.find(client) == client_to_socket.end()) {
-			continue;
-		}
-		int sock = client_to_socket[client];
+	std::map<int, int>::iterator clientsIt = client_to_socket.begin();
+	for (; clientsIt != client_to_socket.end(); clientsIt++) {
+		int client = clientsIt->first;
+		int sock = clientsIt->second;
 		if (sock == 0) {
 			continue;
 		}
@@ -174,9 +132,7 @@ int Server::run() {
 			} else {
 				logger.debug("Client disconnected");
 				// Remove client from map
-				clients.erase(clients.begin() + i);
-				client_to_socket.erase(client);
-				i--;
+				client_to_socket[client] = 0;
 			}
 			if (!error) {
 				Response response = getResponse(req, 0);
@@ -190,11 +146,9 @@ int Server::run() {
 					logger.error("Client not ready for writing");
 				}
 			}
-			i--;
 		}
 	}
 
-	clients.clear();
 	client_to_socket.clear();
 
 	return 0;

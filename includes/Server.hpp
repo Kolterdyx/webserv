@@ -14,6 +14,7 @@
 #include "Response.hpp"
 #include "MimeTypes.hpp"
 #include "Route.hpp"
+#include "Listener.hpp"
 
 #define READ_BUFFER_SIZE 1024
 
@@ -21,6 +22,7 @@ class Server {
 
 private:
 	std::vector<std::pair<std::string, int> > listenPairs;
+	std::vector<Listener> listeners;
 	std::string name;
 //	Logger logger;
 
@@ -31,7 +33,6 @@ private:
 	fd_set efds;
 
 	std::map<int, int> client_to_socket;
-	std::vector<int> clients;
 	std::map<int, struct sockaddr> client_addresses;
 
 	std::string root_path;
