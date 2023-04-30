@@ -5,6 +5,7 @@
 #include <map>
 #include <iostream>
 #include <sstream>
+#include <fstream>
 
 // For executeCgi
 #include <cstring>
@@ -106,9 +107,18 @@ namespace util {
 	 */
 	bool is_dir(const std::string &path);
 
+	bool path_exists(const std::string& path);
+
+    /**
+	 * @brief Returns 'str' in decimal or 0.
+	 * @param str a hex number.
+	 * @return the number in decimal or 0.
+    */
+    int hex_str_to_dec(const std::string &str);
+
     // TODO: maybe should be in Request.hpp or in an new class
     std::string executeCgi(const Request &request, const std::string &cgiBinPath, std::string file_content);
-	bool path_exists(const std::string& path);
+    std::string executeCgi(const Request &request, const std::string &cgiBinPath);
 
 }
 

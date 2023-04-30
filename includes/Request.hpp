@@ -44,22 +44,22 @@ public:
 
 	void setMethod(const std::string &method);
 
-	std::string getHeader(const std::string &key);
+	std::string getHeader(const std::string &key) const;
 
-	std::string getBody();
+	std::string getBody() const;
 
-	std::string getMethod();
+	std::string getMethod() const;
 
 	friend std::ostream &operator<<(std::ostream &os, const Request &request);
 
 
-	int getBodySize();
+	int getBodySize() const;
 
 	std::string toString() const;
 
 	void parse_http_request(std::string request);
 
-	std::string getPath();
+	std::string getPath() const;
 
 };
 

@@ -6,7 +6,7 @@ int util::stoi(const std::string &s) throw (std::invalid_argument) {
     try {
         std::istringstream(s) >> i;
     } catch (std::exception &e) {
-        throw std::invalid_argument("stoi: Invalid argument");
+        throw std::invalid_argument("stoi: Invalid argument"); // TODO: no debe parar el servidor
     }
     return i;
 }
@@ -138,6 +138,13 @@ bool util::path_exists(const std::string& path) {
 	return stat(path.c_str(), &st) == 0;
 }
 
+int util::hex_str_to_dec(const std::string &str) {
+    int num;
+    std::stringstream ss(str);
+    ss >> std::hex >> num;
+    return num;
+}
+
 std::string util::executeCgi(const Request &request, const std::string &cgiBinPath, std::string file_content) {
     // TODO: hacer algo como esto https://github.com/cclaude42/webserv/blob/master/srcs/cgi/CgiHandler.cpp
     (void)request;
@@ -208,4 +215,58 @@ std::string util::executeCgi(const Request &request, const std::string &cgiBinPa
     delete[] env;
 
     return (newBody);
+}
+
+std::string util::executeCgi(const Request &request, const std::string &cgiBinPath) {
+    // TODO: hacer algo como esto https://github.com/cclaude42/webserv/blob/master/srcs/cgi/CgiHandler.cpp
+    (void)request;
+    char **env = new char*[4];
+    env[0] = strdup("REQUEST_METHOD=GET");
+    env[1] = strdup("SERVER_PROTOCOL=HTTP/1.1");
+    env[2] = strdup("PATH_INFO=hola");
+    env[3] = NULL;
+
+    pid_t		pid;
+    std::stringstream newBody;
+
+    int fdin = open("cgiInput", O_RDONLY);
+    int fdout = open("cgiOutput", O_WRONLY | O_CREAT, 0644);
+
+    pid = fork();
+
+    if (pid == -1)
+    {
+        std::cerr << "Fork crashed." << std::endl;
+        return ("Status: 500\r\n\r\n");
+    }
+    else if (!pid)
+    {
+        char *argv[2] = {0};
+        argv[0] = new char[cgiBinPath.size() + 1];
+        strcpy(argv[0], cgiBinPath.c_str());
+
+        dup2(fdin, STDIN_FILENO);
+        dup2(fdout, STDOUT_FILENO);
+        execve(cgiBinPath.c_str(), argv, env);
+        std::cerr << "Execve crashed." << std::endl;
+        if (write(STDOUT_FILENO, "Status: 500\r\n\r\n", 15) < 0)
+            return ("Status: 500\r\n\r\n");
+        exit(-1);
+    }
+    else
+    {
+        waitpid(-1, NULL, 0);
+        close(fdin);
+        close(fdout);
+
+        std::ifstream file("cgiOutput");
+        newBody << file.rdbuf();
+        file.close();
+    }
+
+    for (size_t i = 0; env[i]; i++)
+        free(env[i]);
+    delete[] env;
+
+    return (newBody.str());
 }

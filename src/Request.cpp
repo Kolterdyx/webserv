@@ -29,9 +29,9 @@ void Request::setMethod(const std::string &method) {
 	this->method = method;
 }
 
-std::string Request::getHeader(const std::string &key) {
+std::string Request::getHeader(const std::string &key) const {
 	// Case insensitive
-	for (std::map<std::string, std::string>::iterator it = headers.begin();
+	for (std::map<std::string, std::string>::const_iterator it = headers.begin();
 		 it != headers.end(); ++it) {
 		if (util::to_lower(it->first) == util::to_lower(key)) {
 			return it->second;
@@ -40,11 +40,11 @@ std::string Request::getHeader(const std::string &key) {
 	return "";
 }
 
-std::string Request::getBody() {
+std::string Request::getBody() const {
 	return body;
 }
 
-std::string Request::getMethod() {
+std::string Request::getMethod() const {
 	return method;
 }
 
@@ -80,12 +80,20 @@ void Request::parse_header(const std::string &header_string) {
 }
 
 
-int Request::getBodySize() {
+int Request::getBodySize() const {
 
-	if (getHeader("Content-Length").empty()) {
-		return 0;
+	if (!getHeader("Content-Length").empty()) {
+		return util::stoi(getHeader("Content-Length"));
 	}
-	return util::stoi(getHeader("Content-Length"));
+	if (!getHeader("Transfer-Encoding").empty()) {
+		if (getBody().size() == 0)
+			return 0;
+		size_t idx = getBody().find("0\r\n");
+		if (idx == 0)
+			return 0;
+		return 1;
+	}
+	return 0;
 }
 
 std::string Request::toString() const {
@@ -127,7 +135,7 @@ void Request::parse_http_request(std::string request) {
 }
 
 
-std::string Request::getPath() {
+std::string Request::getPath() const {
 	return path;
 }
 

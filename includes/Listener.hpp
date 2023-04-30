@@ -30,10 +30,13 @@ public:
 private:
     int _socket;
     int _backlog;
+    SA _client_address;
+    socklen_t _addr_size;
 
 public:
     int getSocket() const;
-    int newConnection(sockaddr *addr=NULL);
+    SA getClientAddress() const;
+    int newConnection();
 };
 
 #endif

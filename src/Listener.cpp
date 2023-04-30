@@ -39,17 +39,16 @@ Listener::Listener(std::string ip, short port, int backlog) : _backlog(backlog) 
         logger.error("Failed to set socket to non-blocking");
         return;
     }
+
+    _addr_size = sizeof(_client_address);
+    memset(&_client_address, 0, _addr_size);
 }
 
 int Listener::getSocket() const { return _socket; }
 
-int Listener::newConnection(sockaddr *addr) {
-    int client_socket;
-    SA client_addr;
-    socklen_t addr_size;
+SA Listener::getClientAddress() const { return _client_address; }
 
-    client_socket = accept(_socket, &client_addr, &addr_size);
-    if (addr)
-        memcpy(addr, &client_addr, sizeof(client_addr));
+int Listener::newConnection() {
+    int client_socket = accept(_socket, &_client_address, &_addr_size);
     return client_socket;
 }

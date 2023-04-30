@@ -65,12 +65,11 @@ int Server::run() {
 		for (int n = 0; n < (int) listenPairs.size() && n < 1024; n++) {
 			if (FD_ISSET(sockets[n], &rfds)) {
 				int new_socket;
-				struct sockaddr address;
-				if ((new_socket = listeners[n].newConnection(&address)) < 0) {
+				if ((new_socket = listeners[n].newConnection()) < 0) {
 					logger.error("Failed to accept connection");
 					return -1;
 				}
-				client_addresses[new_socket] = address;
+				client_addresses[new_socket] = listeners[n].getClientAddress();
 				logger.debug("Accepted connection");
 				int flags = fcntl(new_socket, F_SETFL, fcntl(new_socket, F_GETFL) | O_NONBLOCK);
 				if (flags < 0) {
@@ -119,8 +118,27 @@ int Server::run() {
 				}
 				req += buffer;
 				memset(buffer, 0, READ_BUFFER_SIZE + 1);
-				// TODO: se lee por trocitos, si justo lee los 2 saltos de linea entre el header
-				// y el body de la request, para. Habría que mirar el tamaño del body
+				// TODO: si el cliente no cierra la conexion ni manda "\r\n\r\n" como sigue?
+				// size_t h_end;
+				// if ((h_end = req.find("\r\n\r\n")) != std::string::npos) {
+				// 	size_t c_length = req.find("Content-Length");
+				// 	int len = -1;
+
+				// 	if (c_length != std::string::npos) {
+				// 		len = util::stoi(req.substr(c_length + 16, req.find("\r\n", c_length)));
+				// 	}
+				// 	if (req.find("Transfer-Encoding: chunked") != std::string::npos) {
+				// 		len = 0;
+				// 		saveBody(req.substr(h_end + 4), client, valread);
+				// 	}
+				// 	if (len > 0 && req.size() - h_end - 4 - len == 0) {
+				// 		break;
+				// 	}
+				// 	if (len == -1) break;
+				// 	std::string b = req.substr(h_end + 4);
+				// 	std::cout << "body: " << b << "\nlen: " << len << std::endl;
+				// 	break;
+				// }
 				if (req.size() > 4 && req.substr(req.size() - 4) == "\r\n\r\n")
 					break;
 			}
@@ -140,7 +158,13 @@ int Server::run() {
 				logger.log("Response: " + response.getStatusString(), 9);
 //				logger.debug("Sending response: " + responsestr);
 				if (FD_ISSET(client, &wfds)) {
-					send(client, responsestr.c_str(), responsestr.length(), 0);
+					ssize_t lens;
+					size_t pos = 0;
+					while ((lens = send(client, &responsestr.c_str()[pos], responsestr.size() - pos, 0)) > 0) {
+						pos += lens;
+						if (responsestr.size() <= pos)
+							break;
+					}
 					close(client);
 				} else {
 					logger.error("Client not ready for writing");
@@ -181,7 +205,8 @@ Response Server::getResponse(const std::string &bufferstr, int client) {
 		response.addHeader("Content-Type", "text/html");
 	}
 
-	logger.debug("Response raw: " + response.toString());
+	// logger.debug("Response raw: " + response.toString());
+	logger.debug("Content-Length: " + response.getHeader("Content-Length"));
 
 	return response;
 }
@@ -321,10 +346,61 @@ Response Server::handle_get(const Request& request, const std::string& path) {
 }
 
 Response Server::handle_post(const Request& request, const std::string& path) {
-	Response response(405);
-	UNUSED(request);
-	UNUSED(path);
+	if (!request.getBodySize()) {
+		return Response(405);
+	}
 
+	Response response(200);
+	std::string file_path = util::combine_path(getRootPath(), path, true);
+	// logger.debug("File path: " + file_path);
+	// if (file_path.find(getRootPath()) != 0) {
+	// 	logger.error("Invalid path");
+	// 	return Response(403);
+	// }
+	// struct stat statbuf = {};
+	// if (stat(file_path.c_str(), &statbuf) != 0) {
+	// 	logger.error("File not found");
+	// 	return Response(404);
+	// }
+	// if (S_ISDIR(statbuf.st_mode)) {
+	// 	file_path = util::combine_path(file_path, this->routes["*"].getIndex(), true);
+	// 	logger.debug("File path if is dir: " + file_path);
+	// 	logger.debug(this->routes["*"].getIndex());
+	// }
+
+	// // Check if file exists
+	// std::ifstream file(file_path.c_str());
+	// if (!file.good()) {
+	// 	logger.error("File not found");
+	// 	return Response(404);
+	// }
+	std::string file_content;
+	// std::string line;
+	// while (std::getline(file, line, '\n')) {
+	// 	file_content += line + "\n";
+	// }
+
+	file_content = request.getBody();
+	std::ofstream file("cgiInput");
+	size_t size = 1;
+	int i = 0;
+	while (size) {
+		size_t count = file_content.find("\r\n", i) - i;
+		size = util::hex_str_to_dec(file_content.substr(i, count));
+		size_t start = file_content.find("\r\n", i) + 2;
+		file << file_content.substr(start, size);
+		i = start + size + 2;
+	}
+	file.close();
+
+	std::string cgiBinPath = getCgiPath(file_path);
+	if (cgiBinPath.size()) {
+		file_content = util::executeCgi(request, cgiBinPath);
+		if (file_content.find("\r\n\r\n") + 4 < file_content.size()) {
+			file_content = file_content.substr(file_content.find("\r\n\r\n") + 4);
+		}
+	}
+	response.setBody(file_content);
 	return response;
 }
 
@@ -357,4 +433,23 @@ std::string Server::getCgiPath(const std::string &file_path) {
 			return it->second.getCgiBinPath();
 	}
 	return "";
+}
+
+void saveBody(std::string body, int client_socket, ssize_t valread) {
+    char buffer[READ_BUFFER_SIZE + 1];
+    std::ofstream file("temp.txt");
+    file << body;
+
+    while (valread > 0) {
+        valread = recv(client_socket, buffer, READ_BUFFER_SIZE, 0);
+        std::cout << "valread: " << valread << std::endl;
+        if (valread < 0 && errno == EAGAIN) {
+            valread = 1;
+            file.close();
+            break;
+        }
+        file << buffer;
+        memset(buffer, 0, READ_BUFFER_SIZE + 1);
+    }
+    file.close();
 }
