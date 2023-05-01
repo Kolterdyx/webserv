@@ -219,12 +219,13 @@ std::string util::executeCgi(const Request &request, const std::string &cgiBinPa
 
 std::string util::executeCgi(const Request &request, const std::string &cgiBinPath) {
     // TODO: hacer algo como esto https://github.com/cclaude42/webserv/blob/master/srcs/cgi/CgiHandler.cpp
-    (void)request;
-    char **env = new char*[4];
+    std::string x_header = "HTTP_X_SECRET_HEADER_FOR_TEST=" + request.getHeader("X-Secret-Header-For-Test");
+    char **env = new char*[5];
     env[0] = strdup("REQUEST_METHOD=POST");
     env[1] = strdup("SERVER_PROTOCOL=HTTP/1.1");
     env[2] = strdup("PATH_INFO=hola");
-    env[3] = NULL;
+    env[3] = strdup(x_header.c_str());
+    env[4] = NULL;
 
     pid_t		pid;
     std::stringstream newBody;

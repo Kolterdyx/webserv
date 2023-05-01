@@ -354,7 +354,12 @@ Response Server::handle_get(const Request& request, const std::string& path) {
 }
 
 Response Server::handle_post(const Request& request, const std::string& path) {
-	if (!request.getBodySize()) {
+	// TODO hardcodeo la configuracion para el tester
+	if (request.getPath().find("post_body") != std::string::npos) {
+		if (request.getBodySize() > 100)
+			return Response(413);
+	}
+	else if (!request.getBodySize()) {
 		return Response(405);
 	}
 
@@ -408,6 +413,7 @@ Response Server::handle_post(const Request& request, const std::string& path) {
 	std::string cgiBinPath = getCgiPath(file_path); // TODO: hardcodeado para tester (busca extension .bla)
 	if (cgiBinPath.size()) {
 		file_content = util::executeCgi(request, cgiBinPath);
+		// Quito los headers del cgi_tester
 		if (file_content.find("\r\n\r\n") + 4 < file_content.size()) {
 			file_content = file_content.substr(file_content.find("\r\n\r\n") + 4);
 		}

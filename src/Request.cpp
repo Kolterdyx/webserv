@@ -88,10 +88,9 @@ int Request::getBodySize() const {
 	if (!getHeader("Transfer-Encoding").empty()) {
 		if (getBody().size() == 0)
 			return 0;
-		size_t idx = getBody().find("0\r\n");
-		if (idx == 0)
-			return 0;
-		return 1;
+		size_t count = getBody().find("\r\n");
+		int size = util::hex_str_to_dec(getBody().substr(0, count));
+		return size;
 	}
 	return 0;
 }

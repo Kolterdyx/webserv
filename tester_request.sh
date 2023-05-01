@@ -121,3 +121,30 @@ curl -X POST -H 'Host: localhost:8080' \
     -H 'Accept-Encoding: gzip' \
     -d 'yyyyyyyyyyyyyyyyyyyyyy...' \
     http://localhost:8080/directory/youpi.bla
+
+printf '\nTest POST http://localhost:8080/post_body with a size of 0 (200)\n'
+curl -X POST -H 'Host: localhost:8080' \
+    -H 'User-Agent: Go-http-client/1.1' \
+    -H 'Transfer-Encoding: chunked' \
+    -H 'Content-Type: test/file' \
+    -H 'Accept-Encoding: gzip' \
+    -d '' \
+    http://localhost:8080/post_body
+
+printf '\nTest POST http://localhost:8080/post_body with a size of 100 (200)\n'
+curl -X POST -H 'Host: localhost:8080' \
+    -H 'User-Agent: Go-http-client/1.1' \
+    -H 'Transfer-Encoding: chunked' \
+    -H 'Content-Type: test/file' \
+    -H 'Accept-Encoding: gzip' \
+    -d 'ttttttttttttttttttt...' \
+    http://localhost:8080/post_body
+
+printf '\nTest POST http://localhost:8080/post_body with a size of 200 (?)\n'
+curl -X POST -H 'Host: localhost:8080' \
+    -H 'User-Agent: Go-http-client/1.1' \
+    -H 'Transfer-Encoding: chunked' \
+    -H 'Content-Type: test/file' \
+    -H 'Accept-Encoding: gzip' \
+    -d 'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc' \
+    http://localhost:8080/post_body
