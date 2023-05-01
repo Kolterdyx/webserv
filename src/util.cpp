@@ -149,7 +149,7 @@ std::string util::executeCgi(const Request &request, const std::string &cgiBinPa
     // TODO: hacer algo como esto https://github.com/cclaude42/webserv/blob/master/srcs/cgi/CgiHandler.cpp
     (void)request;
     char **env = new char*[4];
-    env[0] = strdup("REQUEST_METHOD=GET");
+    env[0] = strdup("REQUEST_METHOD=POST");
     env[1] = strdup("SERVER_PROTOCOL=HTTP/1.1");
     env[2] = strdup("PATH_INFO=hola");
     env[3] = NULL;
@@ -221,7 +221,7 @@ std::string util::executeCgi(const Request &request, const std::string &cgiBinPa
     // TODO: hacer algo como esto https://github.com/cclaude42/webserv/blob/master/srcs/cgi/CgiHandler.cpp
     (void)request;
     char **env = new char*[4];
-    env[0] = strdup("REQUEST_METHOD=GET");
+    env[0] = strdup("REQUEST_METHOD=POST");
     env[1] = strdup("SERVER_PROTOCOL=HTTP/1.1");
     env[2] = strdup("PATH_INFO=hola");
     env[3] = NULL;
@@ -230,7 +230,7 @@ std::string util::executeCgi(const Request &request, const std::string &cgiBinPa
     std::stringstream newBody;
 
     int fdin = open("cgiInput", O_RDONLY);
-    int fdout = open("cgiOutput", O_WRONLY | O_CREAT, 0644);
+    int fdout = open("cgiOutput", O_WRONLY | O_CREAT | O_TRUNC, 0644);
 
     pid = fork();
 

@@ -139,6 +139,8 @@ int Server::run() {
 				// 	std::cout << "body: " << b << "\nlen: " << len << std::endl;
 				// 	break;
 				// }
+
+				// TODO si coincide que lo último en leer es el fin del header si queda sin leer el body
 				if (req.size() > 4 && req.substr(req.size() - 4) == "\r\n\r\n")
 					break;
 			}
@@ -153,14 +155,20 @@ int Server::run() {
 				client_to_socket[client] = 0;
 			}
 			if (!error) {
-				Response response = getResponse(req, 0);
+				Response response = getResponse(req, 0);   // TODO siempre se pasa 0, para que el address?
 				std::string responsestr = response.toString();
 				logger.log("Response: " + response.getStatusString(), 9);
 //				logger.debug("Sending response: " + responsestr);
 				if (FD_ISSET(client, &wfds)) {
-					ssize_t lens;
+					ssize_t lens = 1;
 					size_t pos = 0;
-					while ((lens = send(client, &responsestr.c_str()[pos], responsestr.size() - pos, 0)) > 0) {
+					while (lens > 0) {
+						lens = send(client, &responsestr.c_str()[pos], responsestr.size() - pos, 0);
+						if (lens < 0 && errno == EAGAIN) {
+							lens = 1;
+							usleep(1000);
+							continue;
+						}
 						pos += lens;
 						if (responsestr.size() <= pos)
 							break;
@@ -382,18 +390,22 @@ Response Server::handle_post(const Request& request, const std::string& path) {
 
 	file_content = request.getBody();
 	std::ofstream file("cgiInput");
-	size_t size = 1;
-	int i = 0;
-	while (size) {
-		size_t count = file_content.find("\r\n", i) - i;
-		size = util::hex_str_to_dec(file_content.substr(i, count));
-		size_t start = file_content.find("\r\n", i) + 2;
-		file << file_content.substr(start, size);
-		i = start + size + 2;
+	if (request.getHeader("Transfer-Encoding").find("chunked") != std::string::npos) {
+		size_t size = 1;
+		int i = 0;
+		while (size) {
+			size_t count = file_content.find("\r\n", i) - i;
+			size = util::hex_str_to_dec(file_content.substr(i, count));
+			size_t start = file_content.find("\r\n", i) + 2;
+			file << file_content.substr(start, size);
+			i = start + size + 2;
+		}
+	} else {
+		file << file_content;
 	}
 	file.close();
 
-	std::string cgiBinPath = getCgiPath(file_path);
+	std::string cgiBinPath = getCgiPath(file_path); // TODO: hardcodeado para tester (busca extension .bla)
 	if (cgiBinPath.size()) {
 		file_content = util::executeCgi(request, cgiBinPath);
 		if (file_content.find("\r\n\r\n") + 4 < file_content.size()) {
@@ -442,7 +454,6 @@ void saveBody(std::string body, int client_socket, ssize_t valread) {
 
     while (valread > 0) {
         valread = recv(client_socket, buffer, READ_BUFFER_SIZE, 0);
-        std::cout << "valread: " << valread << std::endl;
         if (valread < 0 && errno == EAGAIN) {
             valread = 1;
             file.close();

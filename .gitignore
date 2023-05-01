@@ -36,3 +36,6 @@ build/
 dist/
 .idea/
 
+cgiInput
+cgiOutput
+temp.txt
