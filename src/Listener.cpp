@@ -46,9 +46,18 @@ Listener::Listener(std::string ip, short port, int backlog) : _backlog(backlog) 
 
 int Listener::getSocket() const { return _socket; }
 
-SA Listener::getClientAddress() const { return _client_address; }
+SA_IN Listener::getClientAddress() const { return _client_address; }
+
+std::string Listener::getClientIp() const {
+    std::string ip = inet_ntoa(_client_address.sin_addr);
+    return ip;
+}
+
+int Listener::getClientPort() const {
+    return ntohs(_client_address.sin_port);
+}
 
 int Listener::newConnection() {
-    int client_socket = accept(_socket, &_client_address, &_addr_size);
+    int client_socket = accept(_socket, (SA*)&_client_address, &_addr_size);
     return client_socket;
 }

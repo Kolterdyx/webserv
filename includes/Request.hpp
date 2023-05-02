@@ -34,7 +34,7 @@ private:
 public:
 
 	Request();
-	Request(const std::string& raw_request, sockaddr addr);
+	Request(const std::string& raw_request, struct sockaddr_in addr);
 
 	~Request();
 

@@ -30,12 +30,14 @@ public:
 private:
     int _socket;
     int _backlog;
-    SA _client_address;
+    SA_IN _client_address;
     socklen_t _addr_size;
 
 public:
     int getSocket() const;
-    SA getClientAddress() const;
+    SA_IN getClientAddress() const;
+    std::string getClientIp() const;
+    int getClientPort() const;
     int newConnection();
 };
 

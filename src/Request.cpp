@@ -48,10 +48,10 @@ std::string Request::getMethod() const {
 	return method;
 }
 
-Request::Request(const std::string& raw_request, sockaddr addr) {
+Request::Request(const std::string& raw_request, struct sockaddr_in addr) {
 	parse_http_request(raw_request);
 	char ip[INET_ADDRSTRLEN];
-	inet_ntop(AF_INET, &(((sockaddr_in *)&addr)->sin_addr), ip, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, &addr.sin_addr, ip, INET_ADDRSTRLEN);
 	origin_ip = std::string(ip);
 }
 

@@ -34,7 +34,7 @@ private:
 	fd_set efds;
 
 	std::map<int, int> client_to_socket;
-	std::map<int, struct sockaddr> client_addresses;
+	std::map<int, struct sockaddr_in> client_addresses;
 
 	std::string root_path;
 	std::map<std::string, Route> routes;
