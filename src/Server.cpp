@@ -42,28 +42,39 @@ void Server::init() {
 int Server::run() {
 	FD_ZERO(&rfds);
 	FD_ZERO(&wfds);
+	int maxfd = 0;
+	// Add sockets of the servers
 	for (int n = 0; n < (int) listenPairs.size() && n < 1024; n++) {
-		FD_SET(sockets[n], &rfds);
-//		FD_SET(sockets[n], &efds);
-		FD_SET(sockets[n], &wfds);
-
-	}
-	int maxfd = sockets[0];
-	for (int n = 1; n < (int) listenPairs.size() && n < 1024; n++) {
-		if (sockets[n] > maxfd) {
-			maxfd = sockets[n];
+		int socket = listeners[n].getSocket();
+		FD_SET(socket, &rfds);
+		if (socket > maxfd) {
+			maxfd = socket;
 		}
 	}
+	// Add open connections
+	std::map<int, int>::iterator clientsIt = client_to_socket.begin();
+	for (; clientsIt != client_to_socket.end(); clientsIt++) {
+		int client = clientsIt->first;
+		FD_SET(client, &rfds);
+		FD_SET(client, &wfds);
+		if (client > maxfd) {
+			maxfd = client;
+		}
+	}
+
 	struct timeval tv;
 	tv.tv_sec = 0;
 	tv.tv_usec = 100000;
-	int retval = select(maxfd + 1, &rfds, &wfds, &efds, &tv);
+	int retval = select(maxfd + 1, &rfds, &wfds, NULL, &tv);
 	if (retval == -1) {
 		logger.error("Error while waiting for socket");
 		return -1;
-	} else if (retval) {
+	}
+	if (retval) {
+		// Check servers connections
 		for (int n = 0; n < (int) listenPairs.size() && n < 1024; n++) {
-			if (FD_ISSET(sockets[n], &rfds)) {
+			int socket = listeners[n].getSocket();
+			if (FD_ISSET(socket, &rfds)) {
 				int new_socket;
 				if ((new_socket = listeners[n].newConnection()) < 0) {
 					logger.error("Failed to accept connection");
@@ -77,47 +88,49 @@ int Server::run() {
 					return -1;
 				}
 				FD_SET(new_socket, &rfds);
-//				FD_SET(new_socket, &efds);
 				FD_SET(new_socket, &wfds);
-				client_to_socket[new_socket] = sockets[n];
+				client_to_socket[new_socket] = socket;
 				if (new_socket > maxfd) {
 					maxfd = new_socket;
 				}
 			}
-			if (FD_ISSET(sockets[n], &efds)) {
-				logger.error("Error on socket");
-				return -1;
-			}
 		}
-	} else {
-//		logger.debug("No site1 within 100ms");
 	}
 
-	bool error = false;
-	std::map<int, int>::iterator clientsIt = client_to_socket.begin();
+	// Check open connections
+	clientsIt = client_to_socket.begin();
 	for (; clientsIt != client_to_socket.end(); clientsIt++) {
 		int client = clientsIt->first;
+		// TODO is that neccesary?
 		int sock = clientsIt->second;
 		if (sock == 0) {
 			continue;
 		}
-		error = false;
+
 		if (FD_ISSET(client, &rfds)) {
 			char buffer[READ_BUFFER_SIZE + 1] = {0};
 			ssize_t valread = 1;
 
 			std::string req;
 			// Read until we get an error or the client disconnects
-			while (valread > 0) {
+			// while (valread > 0) {
 				valread = recv(client, buffer, READ_BUFFER_SIZE, 0);
-				// Non-blocking fds send a 'Try again' error when there is still nothing in the buffer
-				if (valread < 0 && errno == EAGAIN) {
-					valread = 1;
-					usleep(1000);
+				if (valread == 0) {
+					logger.debug("Client disconnected");
+					// Remove client from map
+					client_to_socket.erase(client);
 					continue;
 				}
+
+				// Non-blocking fds send a 'Try again' error when there is still nothing in the buffer
+				// if (valread < 0 && errno == EAGAIN) {
+				// 	valread = 1;
+				// 	usleep(1000);
+				// 	continue;
+				// }
 				req += buffer;
 				memset(buffer, 0, READ_BUFFER_SIZE + 1);
+
 				// TODO: si el cliente no cierra la conexion ni manda "\r\n\r\n" como sigue?
 				// size_t h_end;
 				// if ((h_end = req.find("\r\n\r\n")) != std::string::npos) {
@@ -140,48 +153,40 @@ int Server::run() {
 				// 	break;
 				// }
 
-				// TODO si coincide que lo último en leer es el fin del header si queda sin leer el body
-				if (req.size() > 4 && req.substr(req.size() - 4) == "\r\n\r\n")
-					break;
-			}
+			// TODO si coincide que lo último en leer es el fin del header si queda sin leer el body
+			if (req.size() > 4 && req.substr(req.size() - 4) == "\r\n\r\n")
+				break;
+		}
 
-			if (valread < 0) {
-				// This is needed to not panic and return 400 for anything at
-				// random.
-				error = true;
-			} else {
-				logger.debug("Client disconnected");
-				// Remove client from map
-				client_to_socket[client] = 0;
-			}
-			if (!error) {
-				Response response = getResponse(req, 0);   // TODO siempre se pasa 0, para que el address?
-				std::string responsestr = response.toString();
-				logger.log("Response: " + response.getStatusString(), 9);
+    // TODO AQUI Guardar req en la lectura
+		Response response = getResponse(req, 0);   // TODO siempre se pasa 0, para que el address?
+		std::string responsestr = response.toString();
+		logger.log("Response: " + response.getStatusString(), 9);
 //				logger.debug("Sending response: " + responsestr);
-				if (FD_ISSET(client, &wfds)) {
-					ssize_t lens = 1;
-					size_t pos = 0;
-					while (lens > 0) {
-						lens = send(client, &responsestr.c_str()[pos], responsestr.size() - pos, 0);
-						if (lens < 0 && errno == EAGAIN) {
-							lens = 1;
-							usleep(1000);
-							continue;
-						}
-						pos += lens;
-						if (responsestr.size() <= pos)
-							break;
-					}
-					close(client);
-				} else {
-					logger.error("Client not ready for writing");
-				}
+		if (FD_ISSET(client, &wfds)) {
+			ssize_t lens = 1;
+			size_t pos = 0;
+			// while (lens > 0) {
+				lens = send(client, &responsestr.c_str()[pos], responsestr.size() - pos, 0);
+			// 	if (lens < 0 && errno == EAGAIN) {
+			// 		lens = 1;
+			// 		usleep(1000);
+			// 		continue;
+			// 	}
+			// 	pos += lens;
+			// 	if (responsestr.size() <= pos)
+			// 		break;
+			// }
+			if (lens == 0) {
+				client_to_socket.erase(client);
 			}
+			// close(client);
+		} else {
+			logger.error("Client not ready for writing");
 		}
 	}
 
-	client_to_socket.clear();
+	// client_to_socket.clear();
 
 	return 0;
 }
