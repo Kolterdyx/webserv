@@ -52,7 +52,7 @@ int Server::run() {
 		}
 	}
 	// Add open connections
-	std::map<int, int>::iterator clientsIt = client_to_socket.begin();
+	std::map<int, std::string>::iterator clientsIt = client_to_socket.begin();
 	for (; clientsIt != client_to_socket.end(); clientsIt++) {
 		int client = clientsIt->first;
 		FD_SET(client, &rfds);
@@ -89,7 +89,7 @@ int Server::run() {
 				}
 				FD_SET(new_socket, &rfds);
 				FD_SET(new_socket, &wfds);
-				client_to_socket[new_socket] = socket;
+				client_to_socket[new_socket] = std::string("");
 				if (new_socket > maxfd) {
 					maxfd = new_socket;
 				}
@@ -101,17 +101,12 @@ int Server::run() {
 	clientsIt = client_to_socket.begin();
 	for (; clientsIt != client_to_socket.end(); clientsIt++) {
 		int client = clientsIt->first;
-		// TODO is that neccesary?
-		int sock = clientsIt->second;
-		if (sock == 0) {
-			continue;
-		}
+		std::string &req = clientsIt->second;
 
 		if (FD_ISSET(client, &rfds)) {
 			char buffer[READ_BUFFER_SIZE + 1] = {0};
 			ssize_t valread = 1;
 
-			std::string req;
 			// Read until we get an error or the client disconnects
 			// while (valread > 0) {
 				valread = recv(client, buffer, READ_BUFFER_SIZE, 0);
@@ -128,8 +123,12 @@ int Server::run() {
 				// 	usleep(1000);
 				// 	continue;
 				// }
-				req += buffer;
-				memset(buffer, 0, READ_BUFFER_SIZE + 1);
+				if (valread > 0) {
+					req += buffer;
+					std::cout << "client: " << client << ", valread: " << valread << std::endl;
+					std::cout << "req: " << req << std::endl;
+				}
+				// memset(buffer, 0, READ_BUFFER_SIZE + 1);
 
 				// TODO: si el cliente no cierra la conexion ni manda "\r\n\r\n" como sigue?
 				// size_t h_end;
@@ -153,17 +152,21 @@ int Server::run() {
 				// 	break;
 				// }
 
-			// TODO si coincide que lo último en leer es el fin del header si queda sin leer el body
-			if (req.size() > 4 && req.substr(req.size() - 4) == "\r\n\r\n")
-				break;
+		}
+		// TODO si coincide que lo último en leer es el fin del header si queda sin leer el body
+		if (req.size() > 4 && req.substr(req.size() - 4) == "\r\n\r\n") {
+			std::cout << "Finish: " << req << std::endl;
+			Response response = getResponse(req, 0);   // TODO siempre se pasa 0, para que el address?
+			clientsIt->second = response.toString();
+			logger.log("Response: " + response.getStatusString(), 9);
 		}
 
-    // TODO AQUI Guardar req en la lectura
-		Response response = getResponse(req, 0);   // TODO siempre se pasa 0, para que el address?
-		std::string responsestr = response.toString();
-		logger.log("Response: " + response.getStatusString(), 9);
-//				logger.debug("Sending response: " + responsestr);
+		// logger.debug("Sending response: " + responsestr);
 		if (FD_ISSET(client, &wfds)) {
+			std::string responsestr = clientsIt->second;
+			if (responsestr.empty())
+				continue;
+			std::cout << "response: " << responsestr << std::endl;
 			ssize_t lens = 1;
 			size_t pos = 0;
 			// while (lens > 0) {

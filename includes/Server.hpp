@@ -17,7 +17,7 @@
 #include "Listener.hpp"
 #include "util.hpp"
 
-#define READ_BUFFER_SIZE 1024
+#define READ_BUFFER_SIZE 1024 // TODO use only in Connection
 
 class Server {
 
@@ -28,12 +28,11 @@ private:
 //	Logger logger;
 
 	int sockets[1024];
-	struct sockaddr_in addresses[1024];
 	fd_set rfds;
 	fd_set wfds;
 	fd_set efds;
 
-	std::map<int, int> client_to_socket;
+	std::map<int, std::string> client_to_socket;
 	std::map<int, struct sockaddr_in> client_addresses;
 
 	std::string root_path;
