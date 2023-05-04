@@ -15,24 +15,23 @@
 #include "MimeTypes.hpp"
 #include "Route.hpp"
 #include "Listener.hpp"
+#include "Connection.hpp"
 #include "util.hpp"
 
-#define READ_BUFFER_SIZE 1024 // TODO use only in Connection
+#define BUFFER_SIZE 1024 // TODO use only in Connection
 
 class Server {
 
 private:
-	std::vector<std::pair<std::string, int> > listenPairs;
 	std::vector<Listener> listeners;
+	std::vector<Connection> connections;
 	std::string name;
 //	Logger logger;
 
-	int sockets[1024];
 	fd_set rfds;
 	fd_set wfds;
 	fd_set efds;
 
-	std::map<int, std::string> client_to_socket;
 	std::map<int, struct sockaddr_in> client_addresses;
 
 	std::string root_path;

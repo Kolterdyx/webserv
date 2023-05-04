@@ -5,7 +5,7 @@
 
 
 Server::Server() {
-	this->listenPairs.push_back(std::make_pair("0.0.0.0", 80));
+	this->listeners.push_back(Listener("0.0.0.0", 80));
 	this->name = "Server";
 	init();
 }
@@ -17,8 +17,10 @@ Server::~Server() {
 
 Server::Server(const std::vector<std::pair<std::string, int> > &listen,
 			   const std::string &name) {
-	this->listenPairs = listen;
 	this->name = name;
+	for (int i = 0; i < (int) listen.size() && i < 1024; i++) {
+		listeners.push_back(Listener(listen[i].first, listen[i].second));
+	}
 	init();
 }
 
@@ -31,11 +33,6 @@ void Server::init() {
 	// Listen on a given port and address for incoming connections.
 	// This must not block, so we need to use a non-blocking socket.
 	// We can use run() to wait for incoming connections.
-
-	for (int i = 0; i < (int) listenPairs.size() && i < 1024; i++) {
-		listeners.push_back(Listener(listenPairs[i].first, listenPairs[i].second));
-		sockets[i] = listeners[i].getSocket();
-	}
 }
 
 
@@ -44,7 +41,7 @@ int Server::run() {
 	FD_ZERO(&wfds);
 	int maxfd = 0;
 	// Add sockets of the servers
-	for (int n = 0; n < (int) listenPairs.size() && n < 1024; n++) {
+	for (int n = 0; n < (int) listeners.size() && n < 1024; n++) {
 		int socket = listeners[n].getSocket();
 		FD_SET(socket, &rfds);
 		if (socket > maxfd) {
@@ -52,9 +49,9 @@ int Server::run() {
 		}
 	}
 	// Add open connections
-	std::map<int, std::string>::iterator clientsIt = client_to_socket.begin();
-	for (; clientsIt != client_to_socket.end(); clientsIt++) {
-		int client = clientsIt->first;
+	std::vector<Connection>::iterator connectIt = connections.begin();
+	for (; connectIt != connections.end(); connectIt++) {
+		int client = connectIt->getSocket();
 		FD_SET(client, &rfds);
 		FD_SET(client, &wfds);
 		if (client > maxfd) {
@@ -72,7 +69,7 @@ int Server::run() {
 	}
 	if (retval) {
 		// Check servers connections
-		for (int n = 0; n < (int) listenPairs.size() && n < 1024; n++) {
+		for (int n = 0; n < (int) listeners.size() && n < 1024; n++) {
 			int socket = listeners[n].getSocket();
 			if (FD_ISSET(socket, &rfds)) {
 				int new_socket;
@@ -89,108 +86,36 @@ int Server::run() {
 				}
 				FD_SET(new_socket, &rfds);
 				FD_SET(new_socket, &wfds);
-				client_to_socket[new_socket] = std::string("");
+				connections.push_back(Connection(new_socket));
 				if (new_socket > maxfd) {
 					maxfd = new_socket;
 				}
 			}
 		}
-	}
 
-	// Check open connections
-	clientsIt = client_to_socket.begin();
-	for (; clientsIt != client_to_socket.end(); clientsIt++) {
-		int client = clientsIt->first;
-		std::string &req = clientsIt->second;
+		// Check open connections
+		connectIt = connections.begin();
+		for (; connectIt != connections.end(); connectIt++) {
+			int client = connectIt->getSocket();
 
-		if (FD_ISSET(client, &rfds)) {
-			char buffer[READ_BUFFER_SIZE + 1] = {0};
-			ssize_t valread = 1;
-
-			// Read until we get an error or the client disconnects
-			// while (valread > 0) {
-				valread = recv(client, buffer, READ_BUFFER_SIZE, 0);
-				if (valread == 0) {
-					logger.debug("Client disconnected");
-					// Remove client from map
-					client_to_socket.erase(client);
-					continue;
+			if (FD_ISSET(client, &rfds)) {
+				// If the request is fully received
+				if (connectIt->recv() == 0) {
+					Response response = getResponse(connectIt->getRequest(), 0);   // TODO siempre se pasa 0, para que el address?
+					connectIt->setResponse(response.toString());
+					logger.log("Response: " + response.getStatusString(), 9);
 				}
-
-				// Non-blocking fds send a 'Try again' error when there is still nothing in the buffer
-				// if (valread < 0 && errno == EAGAIN) {
-				// 	valread = 1;
-				// 	usleep(1000);
-				// 	continue;
-				// }
-				if (valread > 0) {
-					req += buffer;
-					std::cout << "client: " << client << ", valread: " << valread << std::endl;
-					std::cout << "req: " << req << std::endl;
-				}
-				// memset(buffer, 0, READ_BUFFER_SIZE + 1);
-
-				// TODO: si el cliente no cierra la conexion ni manda "\r\n\r\n" como sigue?
-				// size_t h_end;
-				// if ((h_end = req.find("\r\n\r\n")) != std::string::npos) {
-				// 	size_t c_length = req.find("Content-Length");
-				// 	int len = -1;
-
-				// 	if (c_length != std::string::npos) {
-				// 		len = util::stoi(req.substr(c_length + 16, req.find("\r\n", c_length)));
-				// 	}
-				// 	if (req.find("Transfer-Encoding: chunked") != std::string::npos) {
-				// 		len = 0;
-				// 		saveBody(req.substr(h_end + 4), client, valread);
-				// 	}
-				// 	if (len > 0 && req.size() - h_end - 4 - len == 0) {
-				// 		break;
-				// 	}
-				// 	if (len == -1) break;
-				// 	std::string b = req.substr(h_end + 4);
-				// 	std::cout << "body: " << b << "\nlen: " << len << std::endl;
-				// 	break;
-				// }
-
-		}
-		// TODO si coincide que lo último en leer es el fin del header si queda sin leer el body
-		if (req.size() > 4 && req.substr(req.size() - 4) == "\r\n\r\n") {
-			std::cout << "Finish: " << req << std::endl;
-			Response response = getResponse(req, 0);   // TODO siempre se pasa 0, para que el address?
-			clientsIt->second = response.toString();
-			logger.log("Response: " + response.getStatusString(), 9);
-		}
-
-		// logger.debug("Sending response: " + responsestr);
-		if (FD_ISSET(client, &wfds)) {
-			std::string responsestr = clientsIt->second;
-			if (responsestr.empty())
-				continue;
-			std::cout << "response: " << responsestr << std::endl;
-			ssize_t lens = 1;
-			size_t pos = 0;
-			// while (lens > 0) {
-				lens = send(client, &responsestr.c_str()[pos], responsestr.size() - pos, 0);
-			// 	if (lens < 0 && errno == EAGAIN) {
-			// 		lens = 1;
-			// 		usleep(1000);
-			// 		continue;
-			// 	}
-			// 	pos += lens;
-			// 	if (responsestr.size() <= pos)
-			// 		break;
-			// }
-			if (lens == 0) {
-				client_to_socket.erase(client);
 			}
-			// close(client);
-		} else {
-			logger.error("Client not ready for writing");
+
+			if (FD_ISSET(client, &wfds)) {
+				// If the response is fully send
+				if (connectIt->send() == 0) {
+					connections.erase(connectIt);
+					break;
+				}
+			}
 		}
 	}
-
-	// client_to_socket.clear();
-
 	return 0;
 }
 
@@ -461,20 +386,21 @@ std::string Server::getCgiPath(const std::string &file_path) {
 	return "";
 }
 
+// TODO Si se va a usar mover a Connection
 void saveBody(std::string body, int client_socket, ssize_t valread) {
-    char buffer[READ_BUFFER_SIZE + 1];
+    char buffer[BUFFER_SIZE + 1];
     std::ofstream file("temp.txt");
     file << body;
 
     while (valread > 0) {
-        valread = recv(client_socket, buffer, READ_BUFFER_SIZE, 0);
+        valread = recv(client_socket, buffer, BUFFER_SIZE, 0);
         if (valread < 0 && errno == EAGAIN) {
             valread = 1;
             file.close();
             break;
         }
         file << buffer;
-        memset(buffer, 0, READ_BUFFER_SIZE + 1);
+        memset(buffer, 0, BUFFER_SIZE + 1);
     }
     file.close();
 }

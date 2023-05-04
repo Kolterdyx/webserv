@@ -1,29 +1,34 @@
 #include "Connection.hpp"
 
-Connection::Connection(Server &server, int socket) : _socket(socket), send_pos(0) {
+Connection::Connection(int socket) : _socket(socket), send_pos(0) {
 	memset(&_address, 0, sizeof(_address));
-	_server = server;
 }
 
-Connection::Connection(Server &server, int socket, struct sockaddr_in address)
-	: _socket(socket), send_pos(0), _address(address) {
-	_server = server;
+Connection::Connection(int socket, struct sockaddr_in address)
+	: _socket(socket), _address(address), send_pos(0) {}
+
+int Connection::getSocket() const { return _socket; }
+
+const std::string &Connection::getRequest() { return _request; }
+
+const std::string &Connection::getResponse() { return _response; }
+
+void Connection::setResponse(std::string resp) {
+	_response = resp;
 }
 
 ssize_t Connection::recv() {
 	char buffer[READ_BUFFER_SIZE + 1] = {0};
 	ssize_t valread = 1;
 
-	valread = recv(_socket, buffer, READ_BUFFER_SIZE, 0);
+	valread = ::recv(_socket, buffer, READ_BUFFER_SIZE, 0);
 	if (valread > 0) {
 		_request += buffer;
 	}
 
-	// if (completeRequest()) {
-		Response response = getResponse(_request, 0);   // TODO siempre se pasa 0, para que el address?
-		_response = response.toString();
-		logger.log("Response: " + response.getStatusString(), 9);
-	// }
+	// std::cout << "Request size: " << _request.size() << std::endl;
+	if (completeRequest())
+		return 0;
     return valread;
 }
 
@@ -33,53 +38,38 @@ ssize_t Connection::send() {
 	}
 
 	ssize_t valsend;
-	valsend = send(_socket, &_response.c_str()[send_pos], _response.size() - send_pos, 0);
+	valsend = ::send(_socket, &_response.c_str()[send_pos], _response.size() - send_pos, 0);
 	if (valsend > 0)
 		send_pos += valsend;
+	if (send_pos >= _response.size()) {
+		close(_socket); // Keep connection alive ?
+		return 0;
+	}
     return valsend;
 }
 
-
-/*
-    char	buffer[RECV_SIZE] = {0};
-	int		ret;
-
-	ret = ::recv(socket, buffer, RECV_SIZE - 1, 0);
-
-	if (ret == 0 || ret == -1)
-	{
-		this->close(socket);
-		if (!ret)
-			std::cout << "\rConnection was closed by client.\n" << std::endl;
-		else
-			std::cout << "\rRead error, closing connection.\n" << std::endl;
-		return (-1);
-	}
-
-	_requests[socket] += std::string(buffer);
-
-	size_t	i = _requests[socket].find("\r\n\r\n");
+bool Connection::completeRequest() {
+	size_t	i = _request.find("\r\n\r\n");
 	if (i != std::string::npos)
 	{
-		if (_requests[socket].find("Content-Length: ") == std::string::npos)
+		if (_request.find("Content-Length: ") == std::string::npos)
 		{
-			if (_requests[socket].find("Transfer-Encoding: chunked") != std::string::npos)
+			if (_request.find("Transfer-Encoding: chunked") != std::string::npos)
 			{
-				if (checkEnd(_requests[socket], "0\r\n\r\n") == 0)
-					return (0);
+				if (_request.substr(_request.size() - 5) == "0\r\n\r\n")
+					return true;
 				else
-					return (1);
+					return false;
 			}
 			else
-				return (0);
+				return true;
 		}
 
-		size_t	len = std::atoi(_requests[socket].substr(_requests[socket].find("Content-Length: ") + 16, 10).c_str());
-		if (_requests[socket].size() >= len + i + 4)
-			return (0);
+		size_t	len = util::stoi(_request.substr(_request.find("Content-Length: ") + 16, 10));
+		if (_request.size() >= len + i + 4)
+			return true;
 		else
-			return (1);
+			return false;
 	}
-
-	return (1);
-*/
+	return false;
+}

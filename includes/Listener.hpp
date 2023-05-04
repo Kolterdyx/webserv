@@ -34,7 +34,7 @@ private:
 
 public:
     int getSocket() const;
-    SA_IN getClientAddress() const;
+    SA_IN getClientAddress() const; // TODO Address methods should be on Connection
     std::string getClientIp() const;
     int getClientPort() const;
     int newConnection();
