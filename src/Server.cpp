@@ -365,8 +365,31 @@ Response Server::handle_delete(const Request& request, const std::string& path) 
 
 Response Server::handle_put(const Request& request, const std::string& path) {
 	Response response(201);
-	UNUSED(request);
-	UNUSED(path);
+	std::string file_path = util::combine_path(getRootPath(), path, true);
+	std::string directory = file_path.substr(0, file_path.rfind("/"));
+	struct stat st = {};
+
+	if (directory.size() && stat(directory.c_str(), &st) == -1)
+		mkdir(directory.c_str(), 0700);
+	std::ofstream file(file_path);
+	if (!file.is_open())
+		return Response(500);
+
+	std::string file_content = request.getBody();
+	if (request.getHeader("Transfer-Encoding").find("chunked") != std::string::npos) {
+		size_t size = 1;
+		int i = 0;
+		while (size) {
+			size_t count = file_content.find("\r\n", i) - i;
+			size = util::hex_str_to_dec(file_content.substr(i, count));
+			size_t start = file_content.find("\r\n", i) + 2;
+			file << file_content.substr(start, size);
+			i = start + size + 2;
+		}
+	} else {
+		file << file_content;
+	}
+	file.close();
 
 	return response;
 }
