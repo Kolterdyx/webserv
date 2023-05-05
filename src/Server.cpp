@@ -52,8 +52,10 @@ int Server::run() {
 	std::vector<Connection>::iterator connectIt = connections.begin();
 	for (; connectIt != connections.end(); connectIt++) {
 		int client = connectIt->getSocket();
-		FD_SET(client, &rfds);
-		FD_SET(client, &wfds);
+		if (connectIt->isFinishRequest())
+			FD_SET(client, &wfds);
+		else
+			FD_SET(client, &rfds);
 		if (client > maxfd) {
 			maxfd = client;
 		}
@@ -84,8 +86,6 @@ int Server::run() {
 					logger.error("Failed to set socket to non-blocking");
 					return -1;
 				}
-				FD_SET(new_socket, &rfds);
-				FD_SET(new_socket, &wfds);
 				connections.push_back(Connection(new_socket));
 				if (new_socket > maxfd) {
 					maxfd = new_socket;
