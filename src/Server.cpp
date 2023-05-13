@@ -104,6 +104,7 @@ int Server::run() {
 			if (fds[connectIt->index].revents & POLLOUT) {
 				// If the response is fully send
 				if (connectIt->send() == 0) {
+					usleep(2100);
 					connections.erase(connectIt);
 					break;
 				}
