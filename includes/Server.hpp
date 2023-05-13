@@ -19,6 +19,7 @@
 #include "util.hpp"
 
 #define BUFFER_SIZE 1024 // TODO use only in Connection
+#define MAX_CONNECTION 1024
 
 class Server {
 

@@ -37,34 +37,34 @@ void Server::init() {
 
 
 int Server::run() {
-	FD_ZERO(&rfds);
-	FD_ZERO(&wfds);
-	int maxfd = 0;
+	struct pollfd fds[MAX_CONNECTION + 1];
+	int nfds = 0;
+
+	std::memset(fds, 0, sizeof(fds));
 	// Add sockets of the servers
 	for (int n = 0; n < (int) listeners.size() && n < 1024; n++) {
 		int socket = listeners[n].getSocket();
-		FD_SET(socket, &rfds);
-		if (socket > maxfd) {
-			maxfd = socket;
-		}
+		fds[n].fd = socket;
+		fds[n].events = POLLIN;
+		nfds++;
 	}
 	// Add open connections
 	std::vector<Connection>::iterator connectIt = connections.begin();
 	for (; connectIt != connections.end(); connectIt++) {
 		int client = connectIt->getSocket();
+		fds[nfds].fd = client;
+		connectIt->index = nfds;
 		if (connectIt->isFinishRequest())
-			FD_SET(client, &wfds);
+			fds[nfds].events = POLLOUT;
 		else
-			FD_SET(client, &rfds);
-		if (client > maxfd) {
-			maxfd = client;
-		}
+			fds[nfds].events = POLLIN;
+		nfds++;
 	}
 
-	struct timeval tv;
-	tv.tv_sec = 0;
-	tv.tv_usec = 100000;
-	int retval = select(maxfd + 1, &rfds, &wfds, NULL, &tv);
+	int timeout = 1 * 1000;
+	int retval = poll(fds, nfds, timeout);
+	// if (retval == 0)
+	// 	std::cout << "TIMEOUT" << std::endl;
 	if (retval == -1) {
 		logger.error("Error while waiting for socket");
 		return -1;
@@ -72,8 +72,7 @@ int Server::run() {
 	if (retval) {
 		// Check servers connections
 		for (int n = 0; n < (int) listeners.size() && n < 1024; n++) {
-			int socket = listeners[n].getSocket();
-			if (FD_ISSET(socket, &rfds)) {
+			if (fds[n].revents & POLLIN && nfds < MAX_CONNECTION + 1) {
 				int new_socket;
 				if ((new_socket = listeners[n].newConnection()) < 0) {
 					logger.error("Failed to accept connection");
@@ -87,18 +86,13 @@ int Server::run() {
 					return -1;
 				}
 				connections.push_back(Connection(new_socket));
-				if (new_socket > maxfd) {
-					maxfd = new_socket;
-				}
 			}
 		}
 
 		// Check open connections
 		connectIt = connections.begin();
 		for (; connectIt != connections.end(); connectIt++) {
-			int client = connectIt->getSocket();
-
-			if (FD_ISSET(client, &rfds)) {
+			if (connectIt->index >= 0 && fds[connectIt->index].revents & POLLIN) {
 				// If the request is fully received
 				if (connectIt->recv() == 0) {
 					Response response = getResponse(connectIt->getRequest(), 0);   // TODO siempre se pasa 0, para que el address?
@@ -107,7 +101,7 @@ int Server::run() {
 				}
 			}
 
-			if (FD_ISSET(client, &wfds)) {
+			if (fds[connectIt->index].revents & POLLOUT) {
 				// If the response is fully send
 				if (connectIt->send() == 0) {
 					connections.erase(connectIt);
@@ -371,7 +365,7 @@ Response Server::handle_put(const Request& request, const std::string& path) {
 
 	if (directory.size() && stat(directory.c_str(), &st) == -1)
 		mkdir(directory.c_str(), 0700);
-	std::ofstream file(file_path);
+	std::ofstream file(file_path.c_str());
 	if (!file.is_open())
 		return Response(500);
 
@@ -417,7 +411,7 @@ void saveBody(std::string body, int client_socket, ssize_t valread) {
 
     while (valread > 0) {
         valread = recv(client_socket, buffer, BUFFER_SIZE, 0);
-        if (valread < 0 && errno == EAGAIN) {
+        if (valread < 0 && errno == EAGAIN) { // TODO Cannot check errno after read or write operation
             valread = 1;
             file.close();
             break;

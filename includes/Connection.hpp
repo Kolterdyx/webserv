@@ -27,6 +27,8 @@ private:
     bool finish_request;
 
 public:
+    int index;
+
     int getSocket() const;
     const std::string &getRequest();
     const std::string &getResponse();
