@@ -92,7 +92,22 @@ int Server::run() {
 		// Check open connections
 		connectIt = connections.begin();
 		for (; connectIt != connections.end(); connectIt++) {
-			if (connectIt->index >= 0 && fds[connectIt->index].revents & POLLIN) {
+			int idx = connectIt->index;
+
+			// If client closed connection
+			if (idx >= 0 && fds[idx].revents & POLLHUP) {
+				close(connectIt->getSocket());
+				connections.erase(connectIt);
+				break;
+			}
+
+			// If client not open
+			if (idx >= 0 && fds[idx].revents & POLLNVAL) {
+				connections.erase(connectIt);
+				break;
+			}
+
+			if (idx >= 0 && fds[idx].revents & POLLIN) {
 				// If the request is fully received
 				if (connectIt->recv() == 0) {
 					Response response = getResponse(connectIt->getRequest(), 0);   // TODO siempre se pasa 0, para que el address?
@@ -101,7 +116,7 @@ int Server::run() {
 				}
 			}
 
-			if (fds[connectIt->index].revents & POLLOUT) {
+			if (idx >= 0 && fds[idx].revents & POLLOUT) {
 				// If the response is fully send
 				if (connectIt->send() == 0) {
 					usleep(2100);
