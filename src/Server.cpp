@@ -110,6 +110,7 @@ int Server::run() {
 			if (FD_ISSET(client, &wfds)) {
 				// If the response is fully send
 				if (connectIt->send() == 0) {
+					usleep(2100); // Limit for macs. Block too much traffic per second.
 					connections.erase(connectIt);
 					break;
 				}
