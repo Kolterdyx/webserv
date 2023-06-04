@@ -15,6 +15,7 @@
 <!--        </route>-->
 <!--        <route path="/someotherpath">-->
         <cgi enabled="true" path="test_ubuntu/ubuntu_cgi_tester" ext=".bla"/>
+        <!-- <cgi enabled="true" path="test_ubuntu/loop" ext=".bla"/> -->
         <listen host="localhost" port="8080"/>
         <listen host="0.0.0.0" port="7070"/>
     </server>

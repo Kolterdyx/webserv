@@ -11,12 +11,16 @@
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
+#include <csignal>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/time.h>
 #include "Request.hpp"
+#include "Logger.hpp"
 class Request;
 #define CGI_BUFSIZE 20
+#define CGI_TIMELIMIT 30
 
 namespace std {
 

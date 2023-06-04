@@ -145,6 +145,28 @@ int util::hex_str_to_dec(const std::string &str) {
     return num;
 }
 
+static bool timeout = false;
+
+static void handle_alarm_signal(int signal) {
+    if (signal == SIGALRM) {
+        kill(0, SIGQUIT);
+        timeout = true;
+    }
+}
+
+static void setup_timer(long seconds) {
+    std::signal(SIGQUIT, SIG_IGN);
+    std::signal(SIGALRM, handle_alarm_signal);
+
+    struct itimerval timer;
+    timer.it_value.tv_sec = seconds;
+    timer.it_value.tv_usec = 0;
+    // Not repeat
+    timer.it_interval.tv_sec = 0;
+    timer.it_interval.tv_usec = 0;
+    setitimer(ITIMER_REAL, &timer, NULL);
+}
+
 std::string util::executeCgi(const Request &request, const std::string &cgiBinPath, std::string file_content) {
     // TODO: hacer algo como esto https://github.com/cclaude42/webserv/blob/master/srcs/cgi/CgiHandler.cpp
     std::string x_header = "HTTP_X_SECRET_HEADER_FOR_TEST=" + request.getHeader("X-Secret-Header-For-Test");
@@ -200,13 +222,21 @@ std::string util::executeCgi(const Request &request, const std::string &cgiBinPa
     }
     else
     {
+        setup_timer(CGI_TIMELIMIT);
         waitpid(-1, NULL, 0);
+
         close(fdin);
         close(fdout);
 
-        std::ifstream file("cgiOutput");
-        newBody << file.rdbuf();
-        file.close();
+        if (timeout) {
+            logger.error("CGI timeout");
+            newBody << "";
+        } else {
+            std::ifstream file("cgiOutput");
+            newBody << file.rdbuf();
+            file.close();
+        }
+
     }
 
     for (size_t i = 0; env[i]; i++)
