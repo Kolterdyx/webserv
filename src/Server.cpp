@@ -99,20 +99,32 @@ int Server::run() {
 			int client = connectIt->getSocket();
 
 			if (FD_ISSET(client, &rfds)) {
+				ssize_t r_recv = connectIt->recv();
 				// If the request is fully received
-				if (connectIt->recv() == 0) {
+				if (r_recv == 0) {
 					Response response = getResponse(connectIt->getRequest(), 0);   // TODO siempre se pasa 0, para que el address?
 					connectIt->setResponse(response.toString());
 					logger.log("Response: " + response.getStatusString(), 9);
 				}
+				// If an error in read
+				if (r_recv < 0) {
+					connections.erase(connectIt);
+					logger.error("Failed to read on socket");
+				}
 			}
 
 			if (FD_ISSET(client, &wfds)) {
+				ssize_t r_send = connectIt->send();
 				// If the response is fully send
-				if (connectIt->send() == 0) {
+				if (r_send == 0) {
 					usleep(2100); // Limit for macs. Block too much traffic per second.
 					connections.erase(connectIt);
 					break;
+				}
+				// If error in write
+				if (r_send < 0) {
+					connections.erase(connectIt);
+					logger.error("Failed to write on socket");
 				}
 			}
 		}
