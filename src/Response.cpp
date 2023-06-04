@@ -129,17 +129,6 @@ void Response::addHeader(const std::string& key, const std::string& value) {
 	setHeader(key, value);
 }
 
-void Response::parse_http_response(std::string response) {
-	std::string header = response.substr(0, response.find("\r\n\r\n"));
-	if (response.find("\r\n\r\n") + 4 >= response.size()) {
-		setBody("");
-	} else {
-		std::string body = response.substr(response.find("\r\n\r\n") + 4);
-		setBody(body);
-	}
-	parse_header(header);
-}
-
 void Response::parse_header(const std::string &header_string) {
 
 	std::stringstream ss(header_string);

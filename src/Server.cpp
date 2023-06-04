@@ -273,11 +273,10 @@ Response Server::handle_get(const Request& request, const std::string& path) {
 	std::string cgiBinPath = getCgiPath(file_path);
 	if (cgiBinPath.size()) {
 		file_content = util::executeCgi(request, cgiBinPath, file_content);
+		// Quito los headers del cgi_tester
 		if (file_content.find("\r\n\r\n") + 4 < file_content.size()) {
 			file_content = file_content.substr(file_content.find("\r\n\r\n") + 4);
 		}
-		// response.parse_http_response(file_content);
-		// return response;
 	}
 	response.setBody(file_content);
 
@@ -299,54 +298,11 @@ Response Server::handle_post(const Request& request, const std::string& path) {
 
 	Response response(200);
 	std::string file_path = util::combine_path(getRootPath(), path, true);
-	// logger.debug("File path: " + file_path);
-	// if (file_path.find(getRootPath()) != 0) {
-	// 	logger.error("Invalid path");
-	// 	return Response(403);
-	// }
-	// struct stat statbuf = {};
-	// if (stat(file_path.c_str(), &statbuf) != 0) {
-	// 	logger.error("File not found");
-	// 	return Response(404);
-	// }
-	// if (S_ISDIR(statbuf.st_mode)) {
-	// 	file_path = util::combine_path(file_path, this->routes["*"].getIndex(), true);
-	// 	logger.debug("File path if is dir: " + file_path);
-	// 	logger.debug(this->routes["*"].getIndex());
-	// }
+	std::string file_content = request.getBody();
 
-	// // Check if file exists
-	// std::ifstream file(file_path.c_str());
-	// if (!file.good()) {
-	// 	logger.error("File not found");
-	// 	return Response(404);
-	// }
-	std::string file_content;
-	// std::string line;
-	// while (std::getline(file, line, '\n')) {
-	// 	file_content += line + "\n";
-	// }
-
-	file_content = request.getBody();
-	std::ofstream file("cgiInput");
-	if (request.getHeader("Transfer-Encoding").find("chunked") != std::string::npos) {
-		size_t size = 1;
-		int i = 0;
-		while (size) {
-			size_t count = file_content.find("\r\n", i) - i;
-			size = util::hex_str_to_dec(file_content.substr(i, count));
-			size_t start = file_content.find("\r\n", i) + 2;
-			file << file_content.substr(start, size);
-			i = start + size + 2;
-		}
-	} else {
-		file << file_content;
-	}
-	file.close();
-
-	std::string cgiBinPath = getCgiPath(file_path); // TODO: hardcodeado para tester (busca extension .bla)
+	std::string cgiBinPath = getCgiPath(file_path);
 	if (cgiBinPath.size()) {
-		file_content = util::executeCgi(request, cgiBinPath);
+		file_content = util::executeCgi(request, cgiBinPath, file_content);
 		// Quito los headers del cgi_tester
 		if (file_content.find("\r\n\r\n") + 4 < file_content.size()) {
 			file_content = file_content.substr(file_content.find("\r\n\r\n") + 4);
@@ -372,7 +328,7 @@ Response Server::handle_put(const Request& request, const std::string& path) {
 
 	if (directory.size() && stat(directory.c_str(), &st) == -1)
 		mkdir(directory.c_str(), 0700);
-	std::ofstream file(file_path);
+	std::ofstream file(file_path.c_str());
 	if (!file.is_open())
 		return Response(500);
 
@@ -408,23 +364,4 @@ std::string Server::getCgiPath(const std::string &file_path) {
 			return it->second.getCgiBinPath();
 	}
 	return "";
-}
-
-// TODO Si se va a usar mover a Connection
-void saveBody(std::string body, int client_socket, ssize_t valread) {
-    char buffer[BUFFER_SIZE + 1];
-    std::ofstream file("temp.txt");
-    file << body;
-
-    while (valread > 0) {
-        valread = recv(client_socket, buffer, BUFFER_SIZE, 0);
-        if (valread < 0 && errno == EAGAIN) {
-            valread = 1;
-            file.close();
-            break;
-        }
-        file << buffer;
-        memset(buffer, 0, BUFFER_SIZE + 1);
-    }
-    file.close();
 }

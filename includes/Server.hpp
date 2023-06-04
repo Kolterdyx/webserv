@@ -82,6 +82,4 @@ public:
 	std::string getCgiPath(const std::string &file_path);
 };
 
-void saveBody(std::string req, int client_socket, ssize_t valread);
-
 #endif //SERVER_HPP

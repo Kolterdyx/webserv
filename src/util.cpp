@@ -147,78 +147,6 @@ int util::hex_str_to_dec(const std::string &str) {
 
 std::string util::executeCgi(const Request &request, const std::string &cgiBinPath, std::string file_content) {
     // TODO: hacer algo como esto https://github.com/cclaude42/webserv/blob/master/srcs/cgi/CgiHandler.cpp
-    (void)request;
-    char **env = new char*[4];
-    env[0] = strdup("REQUEST_METHOD=POST");
-    env[1] = strdup("SERVER_PROTOCOL=HTTP/1.1");
-    env[2] = strdup("PATH_INFO=hola");
-    env[3] = NULL;
-
-    pid_t		pid;
-    std::string	newBody;
-    int 		ret = 1;
-    int         pipeIn[2];
-    int         pipeOut[2];
-
-    if (pipe(pipeIn) || pipe(pipeOut))
-    {
-        std::cerr << "Pipe crashed." << std::endl;
-        return ("Status: 500\r\n\r\n");
-    }
-
-    if(write(pipeIn[1], file_content.c_str(), file_content.size()) < 0)
-        return ("Status: 500\r\n\r\n");
-    close(pipeIn[1]);
-
-    pid = fork();
-
-    if (pid == -1)
-    {
-        std::cerr << "Fork crashed." << std::endl;
-        return ("Status: 500\r\n\r\n");
-    }
-    else if (!pid)
-    {
-        char *argv[2] = {0};
-        argv[0] = new char[cgiBinPath.size() + 1];
-        strcpy(argv[0], cgiBinPath.c_str());
-
-        dup2(pipeIn[0], STDIN_FILENO);
-        dup2(pipeOut[1], STDOUT_FILENO);
-        execve(cgiBinPath.c_str(), argv, env);
-        std::cerr << "Execve crashed." << std::endl;
-        if (write(STDOUT_FILENO, "Status: 500\r\n\r\n", 15) < 0)
-            return ("Status: 500\r\n\r\n");
-        exit(-1);
-    }
-    else
-    {
-        char	buffer[CGI_BUFSIZE] = {0};
-
-        waitpid(-1, NULL, 0);
-        close(pipeIn[0]);
-        close(pipeOut[1]);
-
-        ret = 1;
-        while (ret > 0)
-        {
-            memset(buffer, 0, CGI_BUFSIZE);
-            ret = read(pipeOut[0], buffer, CGI_BUFSIZE - 1);
-            newBody += buffer;
-        }
-    }
-
-    close(pipeOut[0]);
-
-    for (size_t i = 0; env[i]; i++)
-        free(env[i]);
-    delete[] env;
-
-    return (newBody);
-}
-
-std::string util::executeCgi(const Request &request, const std::string &cgiBinPath) {
-    // TODO: hacer algo como esto https://github.com/cclaude42/webserv/blob/master/srcs/cgi/CgiHandler.cpp
     std::string x_header = "HTTP_X_SECRET_HEADER_FOR_TEST=" + request.getHeader("X-Secret-Header-For-Test");
     char **env = new char*[5];
     env[0] = strdup("REQUEST_METHOD=POST");
@@ -229,6 +157,22 @@ std::string util::executeCgi(const Request &request, const std::string &cgiBinPa
 
     pid_t		pid;
     std::stringstream newBody;
+
+	std::ofstream file("cgiInput");
+	if (request.getHeader("Transfer-Encoding").find("chunked") != std::string::npos) {
+		size_t size = 1;
+		int i = 0;
+		while (size) {
+			size_t count = file_content.find("\r\n", i) - i;
+			size = util::hex_str_to_dec(file_content.substr(i, count));
+			size_t start = file_content.find("\r\n", i) + 2;
+			file << file_content.substr(start, size);
+			i = start + size + 2;
+		}
+	} else {
+		file << file_content;
+	}
+	file.close();
 
     int fdin = open("cgiInput", O_RDONLY);
     int fdout = open("cgiOutput", O_WRONLY | O_CREAT | O_TRUNC, 0644);
@@ -268,6 +212,8 @@ std::string util::executeCgi(const Request &request, const std::string &cgiBinPa
     for (size_t i = 0; env[i]; i++)
         free(env[i]);
     delete[] env;
+    std::remove("cgiInput");
+    std::remove("cgiOutput");
 
     return (newBody.str());
 }

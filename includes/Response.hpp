@@ -54,8 +54,6 @@ public:
 	std::string getStatusString() const;
 
 	void addHeader(const std::string& key, const std::string& value);
-
-	void parse_http_response(std::string response);
 };
 
 
